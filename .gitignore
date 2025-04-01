@@ -1,0 +1,14 @@
+# Operating system files
+.DS_Store
+
+# Environment files with sensitive data
+.env
+
+# Folders we don't want to upload to the repository
+data/
+notebooks/
+
+# Other temporary files
+*.log
+*.tmp
+__pycache__/

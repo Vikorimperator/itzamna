@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from pathlib import Path
 from src.utils.config import Paths
+import logging
 
 # Expresiones regulares para detectar archivo y extraer pozo
 REGEX_SENSOR = r"^AYATSIL-(\d+)_all\.csv$"
@@ -89,23 +90,31 @@ def auto_discover_and_ingest():
             continue
 
         file_path = raw_dir / file_name
+        logging.info(f"🔍 Checking file: {file_name}")
 
         if is_file_already_ingested(file_name):
-            print(f"⚠️  File already ingested, skipping: {file_name}")
+            logging.warning(f"⏩ File already ingested: {file_name}")
             continue
 
-        # SENSOR
-        if match := re.match(REGEX_SENSOR, file_name):
-            ingest_sensor_data(file_path, match.group(1))
-        # EQUIPOS
-        elif match := re.match(REGEX_EQUIPOS, file_name):
-            ingest_equipos_data(file_path, match.group(1))
-        # EVENTOS
-        elif match := re.match(REGEX_EVENTOS, file_name):
-            ingest_eventos_data(file_path, match.group(1))
-        else:
-            print(f"❌ Unknown file pattern, skipping: {file_name}")
-            continue
+        try:
+            # SENSOR
+            if match := re.match(REGEX_SENSOR, file_name):
+                logging.info(f"📥 Ingesting into sensor_data_bronce: {file_name}")
+                ingest_sensor_data(file_path, match.group(1))
+            # EQUIPOS
+            elif match := re.match(REGEX_EQUIPOS, file_name):
+                logging.info(f"📥 Ingesting into equipos_bronce: {file_name}")
+                ingest_equipos_data(file_path, match.group(1))
+            # EVENTOS
+            elif match := re.match(REGEX_EVENTOS, file_name):
+                logging.info(f"📥 Ingesting into eventos_bronce: {file_name}")
+                ingest_eventos_data(file_path, match.group(1))
+            else:
+                logging.warning(f"❌ Unknown pattern, skipping: {file_name}")
+                continue
 
-        register_ingested_file(file_name)
-        print(f"✅ File ingested and registered: {file_name}")
+            register_ingested_file(file_name)
+            logging.info(f"✅ File ingested and registered: {file_name}")
+
+        except Exception as e:
+            logging.exception(f"❌ Error ingesting file: {file_name}")

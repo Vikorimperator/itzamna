@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS equipos_bronce (
     marca_bomba TEXT,
     modelo_motor TEXT,
     numero_equipo TEXT,
-    fecha_entrada_operacion DATE,
-    fecha_salida_operacion DATE,
+    fecha_entrada_operacion TIMESTAMP,
+    fecha_salida_operacion TIMESTAMP,
     ingestion_timestamp TIMESTAMP,
     source_file TEXT
 );

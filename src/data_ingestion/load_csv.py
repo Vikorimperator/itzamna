@@ -14,52 +14,53 @@ REGEX_EVENTOS = r"^Eventos_AYATSIL-(\d+)_all\.csv$"
 
 engine = create_engine(Paths.BRONZE_DB_URL)
 
-def ingest_sensor_data(file: Path, pozo: str):
-    df = pd.read_csv(file)
-    df_bronce = pd.DataFrame({
+# --- Ingestión por tipo ---
+def ingest_sensor_data(csv_path: Path, well_id: str):
+    df = pd.read_csv(csv_path)
+    df_bronze = pd.DataFrame({
         "id_ingestion": [str(uuid.uuid4()) for _ in range(len(df))],
-        "pozo": pozo,
+        "pozo": well_id,
         "ingestion_timestamp": datetime.now(timezone.utc),
-        "source_file": file.name,
+        "source_file": csv_path.name,
         "raw_data": df.to_json(orient="records", lines=True).splitlines()
     })
-    df_bronce.to_sql(
+    df_bronze.to_sql(
         "sensor_data_bronce",
         con=engine,
         if_exists="append",
         index=False,
         method="multi",
-        chunksize=1000
+        chunksize=500
         )
 
-def ingest_equipos_data(file: Path, pozo: str):
-    df = pd.read_csv(file, parse_dates=["fecha_entrada_operacion", "fecha_salida_operacion"])
+def ingest_equipos_data(csv_path: Path, well_id: str):
+    df = pd.read_csv(csv_path, parse_dates=["fecha_entrada_operacion", "fecha_salida_operacion"])
     df["id_ingestion"] = [str(uuid.uuid4()) for _ in range(len(df))]
-    df["pozo"] = pozo
+    df["pozo"] = well_id
     df["ingestion_timestamp"] = datetime.now(timezone.utc)
-    df["source_file"] = file.name
+    df["source_file"] = csv_path.name
     df.to_sql(
         "equipos_bronce",
         con=engine,
         if_exists="append",
         index=False,
         method="multi",
-        chunksize=1000
+        chunksize=500
         )
 
-def ingest_eventos_data(file: Path, pozo: str):
-    df = pd.read_csv(file, parse_dates=["fecha_paro", "fecha_reinicio"])
+def ingest_eventos_data(csv_path: Path, well_id: str):
+    df = pd.read_csv(csv_path, parse_dates=["fecha_paro", "fecha_reinicio"])
     df["id_ingestion"] = [str(uuid.uuid4()) for _ in range(len(df))]
-    df["pozo"] = pozo
+    df["pozo"] = well_id
     df["ingestion_timestamp"] = datetime.now(timezone.utc)
-    df["source_file"] = file.name
+    df["source_file"] = csv_path.name
     df.to_sql(
         "eventos_bronce",
         con=engine,
         if_exists="append",
         index=False,
         method="multi",
-        chunksize=1000
+        chunksize=500
         )
 
 # Función  para ingestar todos los archivos CSV en la carpeta 'data/raw'

@@ -63,6 +63,18 @@ def ingest_eventos_data(csv_path: Path, well_id: str):
         chunksize=500
         )
 
+# --- Control de duplicados ---
+def is_file_already_ingested(file_name: str) -> bool:
+    query = f"SELECT 1 FROM ingested_files WHERE file_name = :file"
+    result = pd.read_sql(query, engine, params={"file": file_name})
+    return not result.empty
+
+def register_ingested_file(file_name: str):
+    pd.DataFrame({
+        "file_name": [file_name],
+        "ingestion_timestamp": [datetime.utcnow()]
+    }).to_sql("ingested_files", con=engine, if_exists="append", index=False)
+
 # Función  para ingestar todos los archivos CSV en la carpeta 'data/raw'
 # y cargarlos a la tabla Bronce adecuada según su patrón de nombre
 def auto_discover_and_ingest():

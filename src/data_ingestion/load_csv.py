@@ -75,6 +75,7 @@ def register_ingested_file(file_name: str):
         "ingestion_timestamp": [datetime.utcnow()]
     }).to_sql("ingested_files", con=engine, if_exists="append", index=False)
 
+# --- Lógica principal ---
 # Función  para ingestar todos los archivos CSV en la carpeta 'data/raw'
 # y cargarlos a la tabla Bronce adecuada según su patrón de nombre
 def auto_discover_and_ingest():
@@ -85,30 +86,26 @@ def auto_discover_and_ingest():
     raw_dir = Paths.RAW_DATA
     for file_name in os.listdir(raw_dir):
         if not file_name.endswith(".csv"):
-            continue  # ignorar archivos que no son CSV
+            continue
 
-        csv_path = raw_dir / file_name
-        
+        file_path = raw_dir / file_name
+
+        if is_file_already_ingested(file_name):
+            print(f"⚠️  File already ingested, skipping: {file_name}")
+            continue
+
         # SENSOR
-        match_sensor = re.match(REGEX_SENSOR, file_name)
-        if match_sensor:
-            pozo_id = match_sensor.group(1)  # extrae XXX
-            ingest_sensor_data(csv_path, pozo_id)
-            continue
-
+        if match := re.match(REGEX_SENSOR, file_name):
+            ingest_sensor_data(file_path, match.group(1))
         # EQUIPOS
-        match_equipos = re.match(REGEX_EQUIPOS, file_name)
-        if match_equipos:
-            pozo_id = match_equipos.group(1)
-            ingest_equipos_data(csv_path, pozo_id)
-            continue
-
+        elif match := re.match(REGEX_EQUIPOS, file_name):
+            ingest_equipos_data(file_path, match.group(1))
         # EVENTOS
-        match_eventos = re.match(REGEX_EVENTOS, file_name)
-        if match_eventos:
-            pozo_id = match_eventos.group(1)
-            ingest_eventos_data(csv_path, pozo_id)
+        elif match := re.match(REGEX_EVENTOS, file_name):
+            ingest_eventos_data(file_path, match.group(1))
+        else:
+            print(f"❌ Unknown file pattern, skipping: {file_name}")
             continue
 
-        # Si no coincide con ninguno de los patrones, ignoramos o logueamos
-        print(f"Archivo {file_name} no coincide con patrones esperados, se ignora.")
+        register_ingested_file(file_name)
+        print(f"✅ File ingested and registered: {file_name}")

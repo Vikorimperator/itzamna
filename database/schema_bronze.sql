@@ -33,3 +33,9 @@ CREATE TABLE IF NOT EXISTS eventos_bronce (
     ingestion_timestamp TIMESTAMP,
     source_file TEXT
 );
+
+-- Tabla control duplicados
+CREATE TABLE IF NOT EXISTS ingested_files (
+    file_name TEXT PRIMARY KEY,
+    ingestion_timestamp TIMESTAMP
+);

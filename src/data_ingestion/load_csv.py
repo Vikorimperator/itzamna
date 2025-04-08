@@ -66,14 +66,14 @@ def ingest_eventos_data(csv_path: Path, well_id: str):
 
 # --- Control de duplicados ---
 def is_file_already_ingested(file_name: str) -> bool:
-    query = f"SELECT 1 FROM ingested_files WHERE file_name = :file"
-    result = pd.read_sql(query, engine, params={"file": file_name})
+    query = "SELECT 1 FROM ingested_files WHERE file_name = %s"
+    result = pd.read_sql(query, engine, params=[file_name])
     return not result.empty
 
 def register_ingested_file(file_name: str):
     pd.DataFrame({
         "file_name": [file_name],
-        "ingestion_timestamp": [datetime.utcnow()]
+        "ingestion_timestamp": [datetime.now(timezone.utc)]
     }).to_sql("ingested_files", con=engine, if_exists="append", index=False)
 
 # --- Lógica principal ---

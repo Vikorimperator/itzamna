@@ -6,14 +6,14 @@ import logging
 setup_logging()
 
 if __name__ == "__main__":
-    logging.info("🚀 Starting pipeline...")
+    logging.info("Starting pipeline...")
     
     try:
         init_bronze_schema()        # Crea tablas si no existen
-        logging.info("✅ Schema initialized.")
+        logging.info("Schema initialized.")
 
         auto_discover_and_ingest()  # Ingresa los CSV automáticamente
-        logging.info("✅ Ingestion completed successfully.")
+        logging.info("Ingestion completed successfully.")
 
     except Exception as e:
-        logging.exception(f"❌ Error in pipeline execution: {e}")
+        logging.exception(f"Error in pipeline execution: {e}")

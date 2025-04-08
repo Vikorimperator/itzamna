@@ -16,4 +16,4 @@ if __name__ == "__main__":
         logging.info("✅ Ingestion completed successfully.")
 
     except Exception as e:
-        logging.error(f"❌ Error in pipeline execution: {e}")
+        logging.exception(f"❌ Error in pipeline execution: {e}")

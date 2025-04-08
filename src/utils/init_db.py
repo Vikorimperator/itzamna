@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine, text
-from utils.config import Paths
+from src.utils.config import Paths
 from pathlib import Path
 import logging
 
-def init_broze_schema():
+def init_bronze_schema():
     engine =  create_engine(Paths.BRONZE_DB_URL)
     schema_path = Path(Paths.PROJECT_ROOT) / 'database' / 'schema_bronze.sql'
     

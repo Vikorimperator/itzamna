@@ -90,7 +90,7 @@ def auto_discover_and_ingest():
             continue
 
         file_path = raw_dir / file_name
-        logging.info(f"🔍 Checking file: {file_name}")
+        logging.info(f"Checking file: {file_name}")
 
         if is_file_already_ingested(file_name):
             logging.warning(f"File already ingested: {file_name}")

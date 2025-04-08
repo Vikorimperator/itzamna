@@ -67,7 +67,7 @@ def ingest_eventos_data(csv_path: Path, well_id: str):
 # --- Control de duplicados ---
 def is_file_already_ingested(file_name: str) -> bool:
     query = "SELECT 1 FROM ingested_files WHERE file_name = %s"
-    result = pd.read_sql(query, engine, params=[file_name])
+    result = pd.read_sql(query, engine, params=(file_name,))
     return not result.empty
 
 def register_ingested_file(file_name: str):

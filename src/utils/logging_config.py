@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from utils.config import Paths
+from src.utils.config import Paths
 
 def setup_logging(level=logging.INFO):
     log_path = Paths.PROJECT_ROOT / "pipeline.log"

@@ -93,28 +93,28 @@ def auto_discover_and_ingest():
         logging.info(f"🔍 Checking file: {file_name}")
 
         if is_file_already_ingested(file_name):
-            logging.warning(f"⏩ File already ingested: {file_name}")
+            logging.warning(f"File already ingested: {file_name}")
             continue
 
         try:
             # SENSOR
             if match := re.match(REGEX_SENSOR, file_name):
-                logging.info(f"📥 Ingesting into sensor_data_bronce: {file_name}")
+                logging.info(f"Ingesting into sensor_data_bronce: {file_name}")
                 ingest_sensor_data(file_path, match.group(1))
             # EQUIPOS
             elif match := re.match(REGEX_EQUIPOS, file_name):
-                logging.info(f"📥 Ingesting into equipos_bronce: {file_name}")
+                logging.info(f"Ingesting into equipos_bronce: {file_name}")
                 ingest_equipos_data(file_path, match.group(1))
             # EVENTOS
             elif match := re.match(REGEX_EVENTOS, file_name):
-                logging.info(f"📥 Ingesting into eventos_bronce: {file_name}")
+                logging.info(f"Ingesting into eventos_bronce: {file_name}")
                 ingest_eventos_data(file_path, match.group(1))
             else:
-                logging.warning(f"❌ Unknown pattern, skipping: {file_name}")
+                logging.warning(f"Unknown pattern, skipping: {file_name}")
                 continue
 
             register_ingested_file(file_name)
-            logging.info(f"✅ File ingested and registered: {file_name}")
+            logging.info(f"File ingested and registered: {file_name}")
 
         except Exception as e:
-            logging.exception(f"❌ Error ingesting file: {file_name}")
+            logging.exception(f"Error ingesting file: {file_name}")

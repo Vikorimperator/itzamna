@@ -57,6 +57,13 @@ def extract_valid_signals_by_equipment(df_filtrado):
                                 for s in sensores])
     return df_lecturas, df_catalogo
 
+def calculate_equipment_status(fecha_salida):
+    """Devuelve 'activo' si el equipo sigue operando, 'inactivo' si ya salió de operación."""
+    if pd.isna(fecha_salida) or fecha_salida > pd.Timestamp.now(tz='UTC'):
+        return 'activo'
+    else:
+        return 'inactivo'
+
 def process_all_bronze_data():
     """Proceso principal para transformar datos desde Bronce hacia Silver."""
     sensores, equipos = load_data_from_bronze()

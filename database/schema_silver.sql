@@ -18,7 +18,7 @@ CREATE TABLE sensor_coverage_silver (
     PRIMARY KEY (pozo, numero_equipo, sensor)
 );
 
--- Tabla de información técnica de equipos con estado calculado
+-- Tabla de información técnica de equipos con estado calculado (columna normal)
 CREATE TABLE equipos_silver (
     pozo TEXT NOT NULL,
     numero_equipo TEXT NOT NULL,
@@ -27,13 +27,7 @@ CREATE TABLE equipos_silver (
     modelo_motor TEXT,
     fecha_entrada_operacion TIMESTAMP WITH TIME ZONE,
     fecha_salida_operacion TIMESTAMP WITH TIME ZONE,
-    estado_equipo TEXT GENERATED ALWAYS AS (
-        CASE 
-            WHEN fecha_salida_operacion IS NULL THEN 'activo'
-            WHEN fecha_salida_operacion > NOW() THEN 'activo'
-            ELSE 'inactivo'
-        END
-    ) STORED,
+    estado_equipo TEXT,
     PRIMARY KEY (pozo, numero_equipo)
 );
 

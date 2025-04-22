@@ -73,3 +73,17 @@ def process_all_bronze_data():
     df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
     
     return df_lecturas, df_catalogo, equipos
+
+def transform_eventos_to_silver(df_eventos):
+    """Transforma los datos de eventos de Bronce hacia Silver."""
+    df_eventos = df_eventos.copy()
+    df_eventos = df_eventos.rename(columns={
+        'fecha_paro': 'fecha_inicio',
+        'fecha_reinicio': 'fecha_fin',
+        'categoria_principal': 'tipo_evento',
+        'categoria_secundaria': 'descripcion'
+    })
+    return df_eventos[[
+        'pozo', 'numero_equipo', 'tipo_evento', 'descripcion',
+        'fecha_inicio', 'fecha_fin', 'comentario'
+    ]]

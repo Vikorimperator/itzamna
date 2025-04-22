@@ -43,3 +43,27 @@ def load_sensor_catalog(df_catalogo: pd.DataFrame):
     except Exception as e:
         logging.exception("Error al cargar sensor_coverage_silver")
         raise
+
+
+def load_equipos_silver(df_equipos: pd.DataFrame):
+    """
+    Carga la tabla equipos_silver con los datos enriquecidos (incluye estado_equipo).
+    """
+    columnas_silver = [
+        'pozo', 'numero_equipo', 'modelo_bomba', 'marca_bomba',
+        'modelo_motor', 'fecha_entrada_operacion', 'fecha_salida_operacion', 'estado_equipo'
+    ]
+
+    try:
+        df_equipos[columnas_silver].to_sql(
+            'equipos_silver',
+            con=engine,
+            if_exists='append',
+            index=False,
+            method='multi',
+            chunksize=500
+        )
+        logging.info(f"Equipos cargados a equipos_silver: {len(df_equipos)} registros")
+    except Exception as e:
+        logging.exception("Error al cargar equipos_silver")
+        raise

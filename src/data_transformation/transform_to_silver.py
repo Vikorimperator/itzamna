@@ -83,6 +83,9 @@ def process_all_bronze_data():
     """Proceso principal para transformar datos desde Bronce hacia Silver."""
     sensores, equipos, eventos = load_data_from_bronze()
     
+    equipos['fecha_salida_operacion'] = pd.to_datetime(
+        equipos['fecha_salida_operacion'], utc=True, errors='coerce'
+        )
     equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
 
     df_filtrado = prepare_and_filter_data(sensores, equipos)

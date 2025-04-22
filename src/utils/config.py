@@ -13,3 +13,5 @@ class Paths:
     PROCESSED_DATA = PROJECT_ROOT / "data" / "processed"
     # Directory of  bronze data base
     BRONZE_DB_URL = os.getenv("BRONZE_DB_URL", "postgresql://user:password@localhost:5432/tu_base")
+    # Directory of  silver data base
+    SILVER_DB_URL = os.getenv("SILVER_DB_URL", "postgresql://user:password@localhost:5432/tu_base")

@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from src.utils.config import Paths
 from datetime import datetime
 from collections import defaultdict
+import logging
 
 engine = create_engine(Paths.BRONZE_DB_URL)
 
@@ -31,6 +32,13 @@ def extract_valid_signals_by_equipment(df_filtrado):
     columnas_metadata = ['pozo', 'numero_equipo', 'timestamp']
     columnas_sensor = [col for col in df_filtrado.columns if col not in columnas_metadata and df_filtrado[col].dtype in ["float64", "int64"]]
 
+    # Eliminar columnas completamente vacías desde el inicio
+    columnas_sensor = [col for col in columnas_sensor if df_filtrado[col].notna().sum() > 0]
+
+    columnas_vacias = [col for col in df_filtrado.columns if df_filtrado[col].isna().all()]
+    if columnas_vacias:
+        logging.warning(f"Columnas completamente vacías detectadas en sensor_data_bronce: {columnas_vacias}")
+
     catalogo = defaultdict(list)
     interpolados = []
 
@@ -52,10 +60,18 @@ def extract_valid_signals_by_equipment(df_filtrado):
 
             interpolados.append(grupo_interp)
 
-    df_lecturas = pd.concat(interpolados, ignore_index=True)
-    df_catalogo = pd.DataFrame([{'pozo': p, 'numero_equipo': e, 'sensor': s}
-                                for (p, e), sensores in catalogo.items()
-                                for s in sensores])
+    if interpolados:
+        df_lecturas = pd.concat(interpolados, ignore_index=True)
+    else:
+        df_lecturas = pd.DataFrame()
+
+    if catalogo:
+        df_catalogo = pd.DataFrame([{'pozo': p, 'numero_equipo': e, 'sensor': s}
+                                    for (p, e), sensores in catalogo.items()
+                                    for s in sensores])
+    else:
+        df_catalogo = pd.DataFrame()
+
     return df_lecturas, df_catalogo
 
 def calculate_equipment_status(fecha_salida):

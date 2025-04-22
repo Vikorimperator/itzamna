@@ -67,3 +67,22 @@ def load_equipos_silver(df_equipos: pd.DataFrame):
     except Exception as e:
         logging.exception("Error al cargar equipos_silver")
         raise
+
+    
+def load_eventos_silver(df_eventos: pd.DataFrame):
+    """
+    Carga la tabla eventos_silver con los datos modificados.
+    """
+    try:
+        df_eventos.to_sql(
+            'eventos_silver',
+            con=engine,
+            if_exists='append',
+            index=False,
+            method='multi',
+            chunksize=500
+        )
+        logging.info(f"Eventos cargados a eventos_silver: {len(df_eventos)} registros")
+    except Exception as e:
+        logging.exception("Error al cargar eventos_silver")
+        raise

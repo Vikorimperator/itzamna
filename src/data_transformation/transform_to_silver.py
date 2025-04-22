@@ -10,7 +10,8 @@ def load_data_from_bronze():
     """Carga los datos desde las tablas bronce necesarias."""
     sensores = pd.read_sql("SELECT * FROM sensor_data_bronce", con=engine)
     equipos = pd.read_sql("SELECT * FROM equipos_bronce", con=engine)
-    return sensores, equipos
+    eventos = pd.read_sql("SELECT * FROM eventos_bronce", con=engine)
+    return sensores, equipos, eventos
 
 def prepare_and_filter_data(sensores, equipos):
     """Une sensores con equipos por pozo y filtra por la ventana de operación del equipo."""
@@ -63,17 +64,7 @@ def calculate_equipment_status(fecha_salida):
         return 'activo'
     else:
         return 'inactivo'
-
-def process_all_bronze_data():
-    """Proceso principal para transformar datos desde Bronce hacia Silver."""
-    sensores, equipos = load_data_from_bronze()
-    equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
-
-    df_filtrado = prepare_and_filter_data(sensores, equipos)
-    df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
     
-    return df_lecturas, df_catalogo, equipos
-
 def transform_eventos_to_silver(df_eventos):
     """Transforma los datos de eventos de Bronce hacia Silver."""
     df_eventos = df_eventos.copy()
@@ -87,3 +78,14 @@ def transform_eventos_to_silver(df_eventos):
         'pozo', 'numero_equipo', 'tipo_evento', 'descripcion',
         'fecha_inicio', 'fecha_fin', 'comentario'
     ]]
+
+def process_all_bronze_data():
+    """Proceso principal para transformar datos desde Bronce hacia Silver."""
+    sensores, equipos = load_data_from_bronze()
+    equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
+
+    df_filtrado = prepare_and_filter_data(sensores, equipos)
+    df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
+    
+    return df_lecturas, df_catalogo, equipos
+

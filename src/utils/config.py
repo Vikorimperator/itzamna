@@ -6,7 +6,7 @@ load_dotenv()
 
 class Paths:
     # Root directory of the project
-    PROJECT_ROOT = Path(__file__).parents[2]  # Two levels up from this file
+    PROJECT_ROOT = Path(__file__).parents[2]  # Dos niveles hacia arriba
     # Directory of the raw data
     RAW_DATA = PROJECT_ROOT / "data" / "raw"
     # Directory of the processed data

@@ -67,6 +67,9 @@ def calculate_equipment_status(fecha_salida):
 def process_all_bronze_data():
     """Proceso principal para transformar datos desde Bronce hacia Silver."""
     sensores, equipos = load_data_from_bronze()
+    equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
+
     df_filtrado = prepare_and_filter_data(sensores, equipos)
     df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
-    return df_lecturas, df_catalogo
+    
+    return df_lecturas, df_catalogo, equipos

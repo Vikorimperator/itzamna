@@ -1,5 +1,5 @@
 -- Tabla de lecturas interpoladas por bomba (formato ancho)
-CREATE TABLE lecturas_silver (
+CREATE TABLE IF NOT EXISTS lecturas_silver (
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
     pozo TEXT NOT NULL,
     numero_equipo TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE lecturas_silver (
 );
 
 -- Tabla de cobertura de sensores por equipo
-CREATE TABLE sensor_coverage_silver (
+CREATE TABLE IF NOT EXISTS sensor_coverage_silver (
     pozo TEXT NOT NULL,
     numero_equipo TEXT NOT NULL,
     sensor TEXT NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE sensor_coverage_silver (
 );
 
 -- Tabla de información técnica de equipos con estado calculado (columna normal)
-CREATE TABLE equipos_silver (
+CREATE TABLE IF NOT EXISTS equipos_silver (
     pozo TEXT NOT NULL,
     numero_equipo TEXT NOT NULL,
     modelo_bomba TEXT,
@@ -32,7 +32,7 @@ CREATE TABLE equipos_silver (
 );
 
 -- Tabla de eventos de operación por pozo y equipo
-CREATE TABLE eventos_silver (
+CREATE TABLE IF NOT EXISTS eventos_silver (
     id_evento SERIAL PRIMARY KEY,
     pozo TEXT NOT NULL,
     numero_equipo TEXT,

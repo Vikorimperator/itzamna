@@ -71,10 +71,15 @@ def load_equipos_silver(df_equipos: pd.DataFrame):
     
 def load_eventos_silver(df_eventos: pd.DataFrame):
     """
-    Carga la tabla eventos_silver con los datos modificados.
+    Carga la tabla eventos_silver con los datos transformados desde eventos_bronce.
     """
+    columnas_silver = [
+        'pozo', 'numero_equipo', 'tipo_evento', 'descripcion',
+        'fecha_inicio', 'fecha_fin', 'comentario'
+    ]
+
     try:
-        df_eventos.to_sql(
+        df_eventos[columnas_silver].to_sql(
             'eventos_silver',
             con=engine,
             if_exists='append',

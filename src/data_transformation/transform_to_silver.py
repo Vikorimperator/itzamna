@@ -123,10 +123,11 @@ def process_all_bronze_data():
         equipos['fecha_salida_operacion'], utc=True, errors='coerce'
         )
     equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
-
+    
+    eventos = assign_equipo_to_eventos(eventos, equipos)
+    
     df_filtrado = prepare_and_filter_data(sensores, equipos)
     df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
-    
     df_eventos_silver = transform_eventos_to_silver(eventos)
     
     return df_lecturas, df_catalogo, equipos, df_eventos_silver

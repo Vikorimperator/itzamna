@@ -126,6 +126,13 @@ def process_all_bronze_data():
     
     eventos = assign_equipo_to_eventos(eventos, equipos)
     
+    eventos_sin_equipo = eventos[eventos['numero_equipo'].isna()]
+    if not eventos_sin_equipo.empty:
+        logging.warning(f"Se encontraron {len(eventos_sin_equipo)} eventos sin numero_equipo asignado.")
+        print(eventos_sin_equipo[['pozo', 'fecha_paro', 'fecha_reinicio', 'categoria_principal']].head())
+    else:
+        logging.info("Todos los eventos fueron asignados a algún equipo.")
+    
     df_filtrado = prepare_and_filter_data(sensores, equipos)
     df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
     df_eventos_silver = transform_eventos_to_silver(eventos)

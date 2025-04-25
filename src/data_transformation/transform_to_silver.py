@@ -89,6 +89,7 @@ def assign_equipo_to_eventos(eventos_df, equipos_df):
     for i, evento in eventos_df.iterrows():
         pozo = evento['pozo']
         fecha_paro = evento['fecha_paro']
+        fecha_paro = pd.to_datetime(fecha_paro, utc=True)
 
         posibles_equipos = equipos_df[
             (equipos_df['pozo'] == pozo) &

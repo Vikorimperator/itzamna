@@ -81,6 +81,26 @@ def calculate_equipment_status(fecha_salida):
     else:
         return 'inactivo'
     
+def assign_equipo_to_eventos(eventos_df, equipos_df):
+    """Asigna el numero_equipo a cada evento según fechas de operación."""
+    eventos_df = eventos_df.copy()
+    eventos_df['numero_equipo'] = None
+
+    for i, evento in eventos_df.iterrows():
+        pozo = evento['pozo']
+        fecha_paro = evento['fecha_paro']
+
+        posibles_equipos = equipos_df[
+            (equipos_df['pozo'] == pozo) &
+            (equipos_df['fecha_entrada_operacion'] <= fecha_paro) &
+            ((equipos_df['fecha_salida_operacion'].isna()) | (equipos_df['fecha_salida_operacion'] >= fecha_paro))
+        ]
+
+        if not posibles_equipos.empty:
+            eventos_df.at[i, 'numero_equipo'] = posibles_equipos.iloc[0]['numero_equipo']
+
+    return eventos_df
+    
 def transform_eventos_to_silver(df_eventos):
     """Transforma los datos de eventos de Bronce hacia Silver."""
     df_eventos = df_eventos.copy()

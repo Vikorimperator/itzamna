@@ -12,6 +12,12 @@ def load_data_from_bronze():
     sensores = pd.read_sql("SELECT * FROM sensor_data_bronce", con=engine)
     equipos = pd.read_sql("SELECT * FROM equipos_bronce", con=engine)
     eventos = pd.read_sql("SELECT * FROM eventos_bronce", con=engine)
+    
+    # Expandir JSON de sensores
+    df_expanded = pd.json_normalize(sensores['raw_data'])
+    df_expanded['timestamp'] = pd.to_datetime(df_expanded['timestamp'], utc=True, errors='coerce')
+    sensores = pd.concat([sensores[['pozo']], df_expanded], axis=1)
+    
     return sensores, equipos, eventos
 
 def prepare_and_filter_data(sensores, equipos):

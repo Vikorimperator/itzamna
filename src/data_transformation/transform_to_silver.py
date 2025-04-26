@@ -22,7 +22,7 @@ def load_data_from_bronze():
 
 def prepare_and_filter_data(sensores, equipos):
     """Une sensores con equipos por pozo y filtra por la ventana de operación del equipo."""
-    sensores['timestamp'] = pd.to_datetime(sensores['ingestion_timestamp'], utc=True)
+    sensores['timestamp'] = pd.to_datetime(sensores['timestamp'], utc=True)
 
     equipos['fecha_entrada_operacion_alineada'] = pd.to_datetime(equipos['fecha_entrada_operacion'], utc=True).dt.floor('10min')
     equipos['fecha_salida_operacion_alineada'] = pd.to_datetime(equipos['fecha_salida_operacion'], utc=True, errors='coerce').dt.ceil('10min')

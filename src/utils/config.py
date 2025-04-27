@@ -6,12 +6,10 @@ load_dotenv()
 
 class Paths:
     # Root directory of the project
-    PROJECT_ROOT = Path(__file__).parents[2]  # Dos niveles hacia arriba
+    PROJECT_ROOT    = Path(__file__).parents[2]
     # Directory of the raw data
-    RAW_DATA = PROJECT_ROOT / "data" / "raw"
-    # Directory of the processed data
-    PROCESSED_DATA = PROJECT_ROOT / "data" / "processed"
-    # Directory of  bronze data base
-    BRONZE_DB_URL = os.getenv("BRONZE_DB_URL", "postgresql://user:password@localhost:5432/tu_base")
-    # Directory of  silver data base
-    SILVER_DB_URL = os.getenv("SILVER_DB_URL", "postgresql://user:password@localhost:5432/tu_base")
+    RAW_DATA        = PROJECT_ROOT / "data" / "raw"
+    # DuckDB catalog file
+    LAKE_FILE       = PROJECT_ROOT / "warehouse.duckdb"
+    # Directory of parquet bronze data
+    BRONZE_DIR      = PROJECT_ROOT / "data" / "lake" / "bronze"

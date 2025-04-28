@@ -8,6 +8,9 @@
 data/
 notebooks/
 
+# Database files
+*duckdb
+
 # Other temporary files
 *.log
 *.tmp

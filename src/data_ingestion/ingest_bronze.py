@@ -14,6 +14,15 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     3) Write Parquet to data/lake/bronze/{table_name}/
     4) Create or replace external table bronze.{table_name}
     """
+    
+    name = csv_path.name
+    exists = con.execute(
+        "SELECT 1 FROM bronze.ingested_files WHERE file_name = ?",
+        [name]
+    ).fetchone()
+    if exists:
+        return  
+    
     df = (
         pl.read_csv(csv_path)
           .with_columns([
@@ -34,3 +43,8 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
       SELECT *
       FROM read_parquet('{out_dir}/*.parquet', union_by_name=true);
     """)
+    
+    con.execute(
+      "INSERT INTO bronze.ingested_files VALUES (?, ?)",
+      [name, datetime.now(timezone.utc)]
+    )

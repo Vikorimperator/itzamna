@@ -30,5 +30,7 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
 
     con.execute(f"""
       CREATE OR REPLACE TABLE bronze.{table_name} AS
-      SELECT * FROM read_parquet('{out_dir}/*.parquet');
+      -- union_by_name: true une columnas por nombre y rellena con NULL
+      SELECT *
+      FROM read_parquet('{out_dir}/*.parquet', union_by_name=true);
     """)

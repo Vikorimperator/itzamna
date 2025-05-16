@@ -5,13 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Paths:
-    # Root directory of the project
+    # Directorio raíz del proyecto
     PROJECT_ROOT = Path(__file__).parents[2].resolve()
-    # Directory of the raw data
+    # Directorio de raw data
     RAW_DATA        = PROJECT_ROOT / "data" / "raw"
-    # DuckDB catalog file
+    # Archivo de catálogo de DuckDB
     LAKE_FILE       = PROJECT_ROOT / "warehouse.duckdb"
-    # Directory of parquet bronze data
+    # Directorio de datos de parquet de bronce
     BRONZE_DIR      = PROJECT_ROOT / "data" / "lake" / "bronze"
-    # Directory of parque silver data
+    # Directorio de datos de parquet de silver
     SILVER_DIR      = PROJECT_ROOT / "data" / "lake" / "silver"

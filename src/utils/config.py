@@ -13,3 +13,5 @@ class Paths:
     LAKE_FILE       = PROJECT_ROOT / "warehouse.duckdb"
     # Directory of parquet bronze data
     BRONZE_DIR      = PROJECT_ROOT / "data" / "lake" / "bronze"
+    # Directory of parque silver data
+    SILVER_DIR      = PROJECT_ROOT / "data" / "lake" / "silver"

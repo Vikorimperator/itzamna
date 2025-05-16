@@ -9,10 +9,10 @@ con = duckdb.connect(Paths.LAKE_FILE)
 
 def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     """
-    1) Read CSV with Polars
-    2) Add ingestion_id, source_file, and ingestion_timestamp
-    3) Write Parquet to data/lake/bronze/{table_name}/
-    4) Create or replace external table bronze.{table_name}
+    1) Leer CSV con Polars
+    2) Agregar ingestion_id, source_file, e ingestion_timestamp
+    3) Escribir Parquet en data/lake/bronze/{table_name}/
+    4) Crear o remplazar la tabla externa bronze.{table_name}
     """
     
     name = csv_path.name

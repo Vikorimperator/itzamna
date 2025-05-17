@@ -81,15 +81,31 @@ def generar_catalogo(df_lecturas):
     return pl.DataFrame(catalogo)
 
 def preparar_eventos(df_eventos):
-    """Renombra columnas de eventos para el esquema Silver."""
-    return df_eventos.rename({
+    df_eventos = df_eventos.rename({
         "categoria_principal": "tipo_evento",
         "categoria_secundaria": "descripcion",
         "fecha_paro": "fecha_inicio",
         "fecha_reinicio": "fecha_fin"
-    }).select([
-        "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
+    })
+
+    # Convertir strings a datetime con múltiples formatos aceptados
+    df_eventos = df_eventos.with_columns([
+        pl.when(pl.col("fecha_inicio").str.contains("T"))
+        .then(pl.col("fecha_inicio").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False))
+        .otherwise(pl.col("fecha_inicio").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False))
+        .alias("fecha_inicio"),
+        
+        pl.when(pl.col("fecha_fin").str.contains("T"))
+        .then(pl.col("fecha_fin").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False))
+        .otherwise(pl.col("fecha_fin").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False))
+        .alias("fecha_fin"),
     ])
+
+    columnas_deseadas = [
+        "pozo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
+    ]
+    columnas_finales = [col for col in columnas_deseadas if col in df_eventos.columns]
+    return df_eventos.select(columnas_finales)
     
 def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
     """

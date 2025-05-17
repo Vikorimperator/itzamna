@@ -50,12 +50,23 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     # Parseo de fechas según la tabla
     if table_name == "equipos":
         df = df.with_columns([
-            pl.col("fecha_entrada_operacion").str.strptime(
+            # fecha_entrada_operacion
+            pl.when(pl.col("fecha_entrada_operacion").str.contains("T"))
+            .then(pl.col("fecha_entrada_operacion").str.strptime(
+                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False
+            ))
+            .otherwise(pl.col("fecha_entrada_operacion").str.strptime(
                 pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False
-            ),
-            pl.col("fecha_salida_operacion").str.strptime(
+            )).alias("fecha_entrada_operacion"),
+
+            # fecha_salida_operacion
+            pl.when(pl.col("fecha_salida_operacion").str.contains("T"))
+            .then(pl.col("fecha_salida_operacion").str.strptime(
+                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False
+            ))
+            .otherwise(pl.col("fecha_salida_operacion").str.strptime(
                 pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False
-            )
+            )).alias("fecha_salida_operacion")
         ])
 
     elif table_name == "eventos":

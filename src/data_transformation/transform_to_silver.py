@@ -12,17 +12,18 @@ def read_bronze_tables(con):
     return sensores, equipos, eventos
 
 def prepare_equipos(df_equipos):
-    if df_equipos["fecha_entrada_operacion"].dtype == pl.Utf8:
-        df_equipos = df_equipos.with_columns([
-            pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False),
-            pl.col("fecha_salida_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False)
-        ])
-
+    """
+    Calcula la columna estado_equipo en función de la fecha de salida y la fecha actual (UTC).
+    Asume que las fechas ya vienen correctamente parseadas como datetime desde Bronce.
+    """
     df_equipos = df_equipos.with_columns([
         pl.when(
-            pl.col("fecha_salida_operacion").is_null() | 
+            pl.col("fecha_salida_operacion").is_null() |
             (pl.col("fecha_salida_operacion") > pl.lit(datetime.datetime.now(datetime.timezone.utc)))
-        ).then(pl.lit("activo")).otherwise(pl.lit("inactivo")).alias("estado_equipo")
+        )
+        .then(pl.lit("activo"))
+        .otherwise(pl.lit("inactivo"))
+        .alias("estado_equipo")
     ])
     return df_equipos
 
@@ -81,30 +82,20 @@ def generar_catalogo(df_lecturas):
     return pl.DataFrame(catalogo)
 
 def preparar_eventos(df_eventos):
+    """
+    Renombra las columnas de eventos para el esquema Silver.
+    Asume que las fechas ya vienen como datetime[μs, UTC] desde Bronce.
+    """
     df_eventos = df_eventos.rename({
         "categoria_principal": "tipo_evento",
-        "categoria_secundaria": "descripcion",
-        "fecha_paro": "fecha_inicio",
-        "fecha_reinicio": "fecha_fin"
+        "categoria_secundaria": "descripcion"
     })
-
-    # Convertir strings a datetime con múltiples formatos aceptados
-    df_eventos = df_eventos.with_columns([
-        pl.when(pl.col("fecha_inicio").str.contains("T"))
-        .then(pl.col("fecha_inicio").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False))
-        .otherwise(pl.col("fecha_inicio").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False))
-        .alias("fecha_inicio"),
-        
-        pl.when(pl.col("fecha_fin").str.contains("T"))
-        .then(pl.col("fecha_fin").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False))
-        .otherwise(pl.col("fecha_fin").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False))
-        .alias("fecha_fin"),
-    ])
 
     columnas_deseadas = [
         "pozo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ]
     columnas_finales = [col for col in columnas_deseadas if col in df_eventos.columns]
+
     return df_eventos.select(columnas_finales)
     
 def enriquecer_eventos_con_equipo(df_eventos, df_equipos):

@@ -21,7 +21,9 @@ def prepare_equipos(df_equipos):
         pl.when(
             pl.col("fecha_salida_operacion").is_null() | 
             (pl.col("fecha_salida_operacion") > datetime.datetime.now(datetime.timezone.utc))
-        ).then("activo").otherwise("inactivo").alias("estado_equipo")
+        ).then(pl.lit("activo"))
+        .otherwise(pl.lit("inactivo"))
+        .alias("estado_equipo")
     ])
     return df_equipos
 

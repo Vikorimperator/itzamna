@@ -50,23 +50,29 @@ def interpolar_por_equipo(df_filtrado):
     """Agrupa por pozo y equipo, realiza el resampleo cada 10 minutos e interporalcion lineal."""
     columnas_metadata = {"pozo", "numero_equipo", "timestamp", "source_file", "id_ingestion", "ingestion_timestamp"}
     columnas_sensores = [col for col in df_filtrado.columns if col not in columnas_metadata and df_filtrado[col].dtype in [pl.Float64, pl.Int64]]
-    
+
     lecturas = []
+
     for (pozo, equipo), grupo in df_filtrado.group_by(["pozo", "numero_equipo"], maintain_order=True):
         g = grupo.sort("timestamp").select(["timestamp"] + columnas_sensores)
         if g.height < 2:
             continue
         g = g.set_sorted("timestamp")
+
         g_interp = g.upsample(time_column="timestamp", every="10m").interpolate()
         g_interp = g_interp.with_columns([
             pl.lit(pozo).alias("pozo"),
-            pl.lit(equipo).alias("numero_equipo"),
+            pl.lit(equipo).alias("numero_equipo")
         ])
         lecturas.append(g_interp)
+
     return pl.concat(lecturas) if lecturas else pl.DataFrame()
 
 def generar_catalogo(df_lecturas):
     """Genera un catálogo de sensores disponibles por pozo y equipo a partir de las lecturas interpoladas."""
+    if df_lecturas.is_empty():
+        return pl.DataFrame()
+
     columnas_excluidas = {"timestamp", "pozo", "numero_equipo"}
     sensores_cols = [col for col in df_lecturas.columns if col not in columnas_excluidas]
     catalogo = []
@@ -83,6 +89,25 @@ def preparar_eventos(df_eventos):
         "fecha_paro": "fecha_inicio",
         "fecha_reinicio": "fecha_fin"
     }).select([
+        "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
+    ])
+    
+def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
+    """
+    Une los eventos con los equipos por pozo,
+    y asigna el numero_equipo si el evento ocurre dentro del rango de operación del equipo.
+    """
+    df = df_eventos.join(df_equipos, on="pozo", how="left")
+
+    df = df.filter(
+        (pl.col("fecha_inicio") >= pl.col("fecha_entrada_operacion")) &
+        (
+            pl.col("fecha_fin").is_null() |
+            (pl.col("fecha_fin") <= pl.col("fecha_salida_operacion"))
+        )
+    )
+
+    return df.select([
         "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ])
 
@@ -126,7 +151,8 @@ def transform_bronze_to_silver():
     sensores_filtrados = filtrar_sensores_validos(sensores, equipos)
     lecturas = interpolar_por_equipo(sensores_filtrados)
     catalogo = generar_catalogo(lecturas)
-    eventos_proc = preparar_eventos(eventos)
+    eventos_proc_raw = preparar_eventos(eventos)
+    eventos_proc = enriquecer_eventos_con_equipo(eventos_proc_raw, equipos)
     pozos_silver = generar_tabla_pozos(equipos)
 
     guardar_silver_parquet({

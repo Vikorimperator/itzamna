@@ -51,10 +51,10 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     if table_name == "equipos":
         df = df.with_columns([
             pl.col("fecha_entrada_operacion").str.strptime(
-                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False
+                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False
             ),
             pl.col("fecha_salida_operacion").str.strptime(
-                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False
+                pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%dT%H:%M:%S%z", strict=False
             )
         ])
 

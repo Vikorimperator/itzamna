@@ -1,6 +1,6 @@
 import polars as pl
 import duckdb
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from src.utils.config import Paths
 

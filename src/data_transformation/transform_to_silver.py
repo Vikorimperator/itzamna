@@ -14,8 +14,8 @@ def read_bronze_tables(con):
 def prepare_equipos(df_equipos):
     """Convierte las fechas de los equipos y calcula la columna estado_equipo."""
     df_equipos = df_equipos.with_columns([
-        pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
-        pl.col("fecha_salida_operacion").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+        pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False),
+        pl.col("fecha_salida_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False)
     ])
     df_equipos = df_equipos.with_columns([
         pl.when(

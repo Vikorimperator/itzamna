@@ -98,15 +98,16 @@ def preparar_eventos(df_eventos):
     
 def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
     """
-    Une los eventos con los equipos por pozo,
+    Une eventos con equipos por pozo,
     y asigna el numero_equipo si el evento ocurre dentro del rango de operación del equipo.
+    También toma en cuenta equipos activos (sin fecha de salida).
     """
     df = df_eventos.join(df_equipos, on="pozo", how="left")
 
     df = df.filter(
         (pl.col("fecha_inicio") >= pl.col("fecha_entrada_operacion")) &
         (
-            pl.col("fecha_fin").is_null() |
+            pl.col("fecha_salida_operacion").is_null() |
             (pl.col("fecha_fin") <= pl.col("fecha_salida_operacion"))
         )
     )
@@ -114,6 +115,8 @@ def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
     return df.select([
         "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ])
+
+eventos_proc = enriquecer_eventos_con_equipo(eventos_proc_raw, equipos)
 
 def generar_tabla_pozos(df_equipos: pl.DataFrame) -> pl.DataFrame:
     """

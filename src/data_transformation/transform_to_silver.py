@@ -1,151 +1,120 @@
-import pandas as pd
-from sqlalchemy import create_engine
-from src.utils.config import Paths
+import polars as pl
+import duckdb
 from datetime import datetime
-from collections import defaultdict
-import logging
+from pathlib import Path
+from src.utils.config import Paths
 
-engine = create_engine(Paths.BRONZE_DB_URL)
-
-def load_data_from_bronze():
-    """Carga los datos desde las tablas bronce necesarias."""
-    sensores = pd.read_sql("SELECT * FROM sensor_data_bronce", con=engine)
-    equipos = pd.read_sql("SELECT * FROM equipos_bronce", con=engine)
-    eventos = pd.read_sql("SELECT * FROM eventos_bronce", con=engine)
-    
-    # Expandir JSON de sensores
-    df_expanded = pd.json_normalize(sensores['raw_data'])
-    df_expanded['timestamp'] = pd.to_datetime(df_expanded['timestamp'], utc=True, errors='coerce')
-    sensores = pd.concat([sensores[['pozo']], df_expanded], axis=1)
-    
+def read_bronze_tables(con):
+    """Carga las tablas de la capa Bronce desde DuckDB y las devuelve como DataFrames de Polars."""
+    sensores = con.execute("SELECT * FROM bronze.sensor_data").pl()
+    equipos = con.execute("SELECTO* FROM bronze.equipos").pl()
+    eventos = con.execute("SELECT * FROM bronze.eventos").pl()
     return sensores, equipos, eventos
 
-def prepare_and_filter_data(sensores, equipos):
-    """Une sensores con equipos por pozo y filtra por la ventana de operación del equipo."""
-    sensores['timestamp'] = pd.to_datetime(sensores['timestamp'], utc=True)
+def prepare_equipos(df_equipos):
+    """Convierte las fechas de los equipos y calcula la columna estado_equipo."""
+    df_equipos = df_equipos.with_columns([
+        pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+        pl.col("fecha_salida_operacion").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+    ])
+    df_equipos = df_equipos.with_columns([
+        pl.when(
+            pl.col("fecha_salida_operacion").is_null() | (pl.col("fecha_salida_operacion") > datetime.utcnow())
+        ).then("activo").otherwise("inactivo").alias("estado_equipo")
+    ])
+    return df_equipos
 
-    equipos['fecha_entrada_operacion_alineada'] = pd.to_datetime(equipos['fecha_entrada_operacion'], utc=True).dt.floor('10min')
-    equipos['fecha_salida_operacion_alineada'] = pd.to_datetime(equipos['fecha_salida_operacion'], utc=True, errors='coerce').dt.ceil('10min')
-    equipos['fecha_salida_operacion_alineada'] = equipos['fecha_salida_operacion_alineada'].fillna(datetime.now().astimezone())
-
-    merged = sensores.merge(equipos, on='pozo', how='left')
-    filtrado = merged[(merged['timestamp'] >= merged['fecha_entrada_operacion_alineada']) &
-                      (merged['timestamp'] <= merged['fecha_salida_operacion_alineada'])]
+def filtrar_sensores_validos(df_sensores, df_equipos):
+    """Une sensores con equipo y filtra aquellos que se encuentren dentro del periodo activo de operación."""
+    df_sensores = df_sensores.with_columns([
+        pl.col("timestamp").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
+        pl.col("pozo").cast(pl.Utf8),
+    ])
+    merged = df_sensores.join(df_equipos, on="pozo", how="left")
+    filtrado = merged.filter(
+        (pl.col("timestamp") >= pl.col("fecha_entrada_operacion")) &
+        (
+            pl.col("fecha_salida_operacion").is_null() |
+            (pl.col("timestamp") <= pl.col("fecha_salida_operacion"))
+        )
+    )
     return filtrado
 
-def extract_valid_signals_by_equipment(df_filtrado):
-    """Detecta columnas últiles y genera lecturas interpoladas + catálogo de sensores."""
-    columnas_metadata = ['pozo', 'numero_equipo', 'timestamp']
-    columnas_sensor = [col for col in df_filtrado.columns if col not in columnas_metadata and df_filtrado[col].dtype in ["float64", "int64"]]
-
-    # Eliminar columnas completamente vacías desde el inicio
-    columnas_sensor = [col for col in columnas_sensor if df_filtrado[col].notna().sum() > 0]
-
-    columnas_vacias = [col for col in df_filtrado.columns if df_filtrado[col].isna().all()]
-    if columnas_vacias:
-        logging.warning(f"Columnas completamente vacías detectadas en sensor_data_bronce: {columnas_vacias}")
-
-    catalogo = defaultdict(list)
-    interpolados = []
-
-    for (pozo, equipo), grupo in df_filtrado.groupby(['pozo', 'numero_equipo']):
-        grupo = grupo.set_index('timestamp').sort_index()
-        grupo_resampleado = grupo[columnas_sensor].resample('10min').mean()
-
-        columnas_utiles = [col for col in grupo_resampleado.columns
-                           if grupo_resampleado[col].notna().sum() >= 2 and grupo_resampleado[col].nunique(dropna=True) > 1]
-
-        if columnas_utiles:
-            grupo_interp = grupo_resampleado[columnas_utiles].interpolate(method='linear')
-            grupo_interp['pozo'] = pozo
-            grupo_interp['numero_equipo'] = equipo
-            grupo_interp = grupo_interp.reset_index()
-
-            for sensor in columnas_utiles:
-                catalogo[(pozo, equipo)].append(sensor)
-
-            interpolados.append(grupo_interp)
-
-    if interpolados:
-        df_lecturas = pd.concat(interpolados, ignore_index=True)
-    else:
-        df_lecturas = pd.DataFrame()
-
-    if catalogo:
-        df_catalogo = pd.DataFrame([{'pozo': p, 'numero_equipo': e, 'sensor': s}
-                                    for (p, e), sensores in catalogo.items()
-                                    for s in sensores])
-    else:
-        df_catalogo = pd.DataFrame()
-
-    return df_lecturas, df_catalogo
-
-def calculate_equipment_status(fecha_salida):
-    """Devuelve 'activo' si el equipo sigue operando, 'inactivo' si ya salió de operación."""
-    if pd.isna(fecha_salida) or fecha_salida > pd.Timestamp.now(tz='UTC'):
-        return 'activo'
-    else:
-        return 'inactivo'
+def interpolar_por_equipo(df_filtrado):
+    """Agrupa por pozo y equipo, realiza el resampleo cada 10 minutos e interporalcion lineal."""
+    columnas_metadata = {"pozo", "numero_equipo", "timestamp", "source_file", "id_ingestion", "ingestion_timestamp"}
+    columnas_sensores = [col for col in df_filtrado.columns if col not in columnas_metadata and df_filtrado[col].dtype in [pl.Float64, pl.Int64]]
     
-def assign_equipo_to_eventos(eventos_df, equipos_df):
-    """Asigna el numero_equipo a cada evento según fechas de operación."""
-    eventos_df = eventos_df.copy()
-    eventos_df['numero_equipo'] = None
+    lecturas = []
+    for (pozo, equipo), grupo in df_filtrado.group_by(["pozo", "numero_equipo"], maintain_order=True):
+        g = grupo.sort("timestamp").select(["timestamp"] + columnas_sensores)
+        if g.height < 2:
+            continue
+        g = g.set_sorted("timestamp")
+        g_interp = g.upsample(time_column="timestamp", every="10m").interpolate()
+        g_interp = g_interp.with_columns([
+            pl.lit(pozo).alias("pozo"),
+            pl.lit(equipo).alias("numero_equipo"),
+        ])
+        lecturas.append(g_interp)
+    return pl.concat(lecturas) if lecturas else pl.DataFrame()
 
-    for i, evento in eventos_df.iterrows():
-        pozo = evento['pozo']
-        fecha_paro = evento['fecha_paro']
-        fecha_paro = pd.to_datetime(fecha_paro, utc=True)
+def generar_catalogo(df_lecturas):
+    """Genera un catálogo de sensores disponibles por pozo y equipo a partir de las lecturas interpoladas."""
+    columnas_excluidas = {"timestamp", "pozo", "numero_equipo"}
+    sensores_cols = [col for col in df_lecturas.columns if col not in columnas_excluidas]
+    catalogo = []
+    for row in df_lecturas.select(["pozo", "numero_equipo"]).unique().iter_rows():
+        for sensor in sensores_cols:
+            catalogo.append({"pozo": row[0], "numero_equipo": row[1], "sensor": sensor})
+    return pl.DataFrame(catalogo)
 
-        posibles_equipos = equipos_df[
-            (equipos_df['pozo'] == pozo) &
-            (equipos_df['fecha_entrada_operacion'] <= fecha_paro) &
-            ((equipos_df['fecha_salida_operacion'].isna()) | (equipos_df['fecha_salida_operacion'] >= fecha_paro))
-        ]
+def preparar_eventos(df_eventos):
+    """Renombra columnas de eventos para el esquema Silver."""
+    return df_eventos.rename({
+        "categoria_principal": "tipo_evento",
+        "categoria_secundaria": "descripcion",
+        "fecha_paro": "fecha_inicio",
+        "fecha_reinicio": "fecha_fin"
+    }).select([
+        "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
+    ])
 
-        if not posibles_equipos.empty:
-            eventos_df.at[i, 'numero_equipo'] = posibles_equipos.iloc[0]['numero_equipo']
+def guardar_silver_parquet(dict_dfs):
+    """Guarda cada DataFrame en formato Parquet dentro de su carpeta Silver correspondiente."""
+    for name, df in dict_dfs.items():
+        dir_path = Paths.SILVER_DIR / name
+        dir_path.mkdir(parents=True, exist_ok=True)
+        df.write_parquet(dir_path / f"{name}.parquet")
 
-    return eventos_df
-    
-def transform_eventos_to_silver(df_eventos):
-    """Transforma los datos de eventos de Bronce hacia Silver."""
-    df_eventos = df_eventos.copy()
-    df_eventos = df_eventos.rename(columns={
-        'fecha_paro': 'fecha_inicio',
-        'fecha_reinicio': 'fecha_fin',
-        'categoria_principal': 'tipo_evento',
-        'categoria_secundaria': 'descripcion'
+def registrar_tablas_silver(con):
+    """Registra en DuckDB las tablas externas Silver leyendo los archivos Parquet."""
+    for name in ["lecturas_silver", "sensor_coverage_silver", "equipos_silver", "eventos_silver"]:
+        con.execute(f"""
+            CREATE OR REPLACE TABLE silver.{name} AS
+            SELECT * FROM read_parquet('{Paths.SILVER_DIR / name}/*.parquet');
+        """)
+
+def transform_bronze_to_silver():
+    """Pipeline principal que transforma los datos desde Bronce a Silver utilizando Polars."""
+    con = duckdb.connect(str(Paths.LAKE_FILE))
+
+    sensores, equipos, eventos = read_bronze_tables(con)
+    equipos = prepare_equipos(equipos)
+    sensores_filtrados = filtrar_sensores_validos(sensores, equipos)
+    lecturas = interpolar_por_equipo(sensores_filtrados)
+    catalogo = generar_catalogo(lecturas)
+    eventos_proc = preparar_eventos(eventos)
+
+    guardar_silver_parquet({
+        "lecturas_silver": lecturas,
+        "sensor_coverage_silver": catalogo,
+        "equipos_silver": equipos.select([
+            "pozo", "numero_equipo", "modelo_bomba", "marca_bomba",
+            "modelo_motor", "fecha_entrada_operacion", "fecha_salida_operacion", "estado_equipo"
+        ]),
+        "eventos_silver": eventos_proc
     })
-    return df_eventos[[
-        'pozo', 'numero_equipo', 'tipo_evento', 'descripcion',
-        'fecha_inicio', 'fecha_fin', 'comentario'
-    ]]
 
-def process_all_bronze_data():
-    """Proceso principal para transformar datos desde Bronce hacia Silver."""
-    sensores, equipos, eventos = load_data_from_bronze()
-    
-    equipos['fecha_entrada_operacion'] = pd.to_datetime(
-    equipos['fecha_entrada_operacion'], utc=True, errors='coerce'
-    )
-    equipos['fecha_salida_operacion'] = pd.to_datetime(
-        equipos['fecha_salida_operacion'], utc=True, errors='coerce'
-        )
-    equipos['estado_equipo'] = equipos['fecha_salida_operacion'].apply(calculate_equipment_status)
-    
-    eventos = assign_equipo_to_eventos(eventos, equipos)
-    
-    eventos_sin_equipo = eventos[eventos['numero_equipo'].isna()]
-    if not eventos_sin_equipo.empty:
-        logging.warning(f"Se encontraron {len(eventos_sin_equipo)} eventos sin numero_equipo asignado.")
-        print(eventos_sin_equipo[['pozo', 'fecha_paro', 'fecha_reinicio', 'categoria_principal']].head())
-    else:
-        logging.info("Todos los eventos fueron asignados a algún equipo.")
-    
-    df_filtrado = prepare_and_filter_data(sensores, equipos)
-    df_lecturas, df_catalogo = extract_valid_signals_by_equipment(df_filtrado)
-    df_eventos_silver = transform_eventos_to_silver(eventos)
-    
-    return df_lecturas, df_catalogo, equipos, df_eventos_silver
-
+    registrar_tablas_silver(con)
+    con.close()

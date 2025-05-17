@@ -28,15 +28,12 @@ def prepare_equipos(df_equipos):
     return df_equipos
 
 def filtrar_sensores_validos(df_sensores, df_equipos):
-    """Une sensores con equipo y filtra aquellos que se encuentren dentro del periodo activo de operación."""
-    df_sensores = df_sensores.with_columns([
-        pl.col("timestamp").str.strptime(
-            pl.Datetime(time_unit="us", time_zone="UTC"),
-            "%Y-%m-%dT%H:%M:%S%.fZ",
-            strict=False
-            )
-    ])
+    """
+    Une sensores con equipos y filtra los que están dentro del periodo de operación del equipo.
+    Asume que todas las fechas ya vienen como datetime[μs, America/Mexico_City].
+    """
     merged = df_sensores.join(df_equipos, on="pozo", how="left")
+
     filtrado = merged.filter(
         (pl.col("timestamp") >= pl.col("fecha_entrada_operacion")) &
         (
@@ -45,6 +42,7 @@ def filtrar_sensores_validos(df_sensores, df_equipos):
         )
     )
     return filtrado
+
 
 def interpolar_por_equipo(df_filtrado):
     """Agrupa por pozo y equipo, realiza el resampleo cada 10 minutos e interporalcion lineal."""

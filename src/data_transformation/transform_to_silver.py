@@ -12,18 +12,17 @@ def read_bronze_tables(con):
     return sensores, equipos, eventos
 
 def prepare_equipos(df_equipos):
-    """Convierte las fechas de los equipos y calcula la columna estado_equipo."""
-    df_equipos = df_equipos.with_columns([
-        pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False),
-        pl.col("fecha_salida_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False)
-    ])
+    if df_equipos["fecha_entrada_operacion"].dtype == pl.Utf8:
+        df_equipos = df_equipos.with_columns([
+            pl.col("fecha_entrada_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False),
+            pl.col("fecha_salida_operacion").str.strptime(pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S", strict=False)
+        ])
+
     df_equipos = df_equipos.with_columns([
         pl.when(
             pl.col("fecha_salida_operacion").is_null() | 
-            (pl.col("fecha_salida_operacion") > datetime.datetime.now(datetime.timezone.utc))
-        ).then(pl.lit("activo"))
-        .otherwise(pl.lit("inactivo"))
-        .alias("estado_equipo")
+            (pl.col("fecha_salida_operacion") > pl.lit(datetime.datetime.now(datetime.timezone.utc)))
+        ).then(pl.lit("activo")).otherwise(pl.lit("inactivo")).alias("estado_equipo")
     ])
     return df_equipos
 

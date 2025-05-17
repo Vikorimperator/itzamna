@@ -1,3 +1,4 @@
+import re
 import polars as pl
 import duckdb
 import uuid
@@ -6,6 +7,25 @@ from pathlib import Path
 from src.utils.config import Paths
 
 con = duckdb.connect(Paths.LAKE_FILE)
+
+def extract_pozo(csv_path: Path, table_name: str) -> str:
+    """
+    Extrae el número de pozo desde el nombre del archivo según el tipo de tabla.
+    """
+    name = csv_path.name
+    if table_name == "sensor_data":
+        match = re.match(r"^AYATSIL-(\d+)_all\.csv$", name)
+    elif table_name == "equipos":
+        match = re.match(r"^BEC_AYATSIL-(\d+)_all\.csv$", name)
+    elif table_name == "eventos":
+        match = re.match(r"^Eventos_AYATSIL-(\d+)_all\.csv$", name)
+    else:
+        match = None
+
+    if match:
+        return match.group(1)
+    else:
+        raise ValueError(f"No se pudo extraer el número de pozo del archivo: {name}")
 
 def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     """

@@ -30,8 +30,11 @@ def prepare_equipos(df_equipos):
 def filtrar_sensores_validos(df_sensores, df_equipos):
     """Une sensores con equipo y filtra aquellos que se encuentren dentro del periodo activo de operación."""
     df_sensores = df_sensores.with_columns([
-        pl.col("timestamp").str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False),
-        pl.col("pozo").cast(pl.Utf8),
+        pl.col("timestamp").str.strptime(
+            pl.Datetime(time_unit="us", time_zone="UTC"),
+            "%Y-%m-%dT%H:%M:%S%.fZ",
+            strict=False
+            )
     ])
     merged = df_sensores.join(df_equipos, on="pozo", how="left")
     filtrado = merged.filter(

@@ -43,12 +43,15 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     if exists:
         return  
     
+    pozo = extract_pozo(csv_path, table_name)
+    
     df = (
         pl.read_csv(csv_path)
           .with_columns([
-             pl.lit(str(uuid.uuid4())).alias("id_ingestion"),
-             pl.lit(csv_path.name).alias("source_file"),
-             pl.lit(datetime.now(timezone.utc)).alias("ingestion_timestamp")
+            pl.lit(pozo).alias("pozo"),
+            pl.lit(str(uuid.uuid4())).alias("id_ingestion"),
+            pl.lit(csv_path.name).alias("source_file"),
+            pl.lit(datetime.now(timezone.utc)).alias("ingestion_timestamp")
           ])
     )
 

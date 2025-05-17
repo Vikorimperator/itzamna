@@ -116,7 +116,6 @@ def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
         "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ])
 
-eventos_proc = enriquecer_eventos_con_equipo(eventos_proc_raw, equipos)
 
 def generar_tabla_pozos(df_equipos: pl.DataFrame) -> pl.DataFrame:
     """

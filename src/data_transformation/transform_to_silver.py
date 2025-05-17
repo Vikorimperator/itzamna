@@ -1,6 +1,6 @@
 import polars as pl
 import duckdb
-from datetime import datetime, timezone
+import datetime
 from pathlib import Path
 from src.utils.config import Paths
 
@@ -20,7 +20,7 @@ def prepare_equipos(df_equipos):
     df_equipos = df_equipos.with_columns([
         pl.when(
             pl.col("fecha_salida_operacion").is_null() | 
-            (pl.col("fecha_salida_operacion") > datetime.now(datetime.timezone.utc))
+            (pl.col("fecha_salida_operacion") > datetime.datetime.now(datetime.timezone.utc))
         ).then("activo").otherwise("inactivo").alias("estado_equipo")
     ])
     return df_equipos

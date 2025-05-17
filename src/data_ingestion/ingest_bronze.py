@@ -88,6 +88,25 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
                 pl.Datetime(time_unit="us", time_zone="UTC"), "%Y-%m-%d %H:%M:%S%z", strict=False))
             .alias("fecha_fin")
         ])
+        
+    elif table_name == "sensor_data":
+        # Parsear la columna timestamp
+        df = df.with_columns([
+            pl.col("timestamp").str.strptime(
+                pl.Datetime(time_unit="us", time_zone="UTC"),
+                "%Y-%m-%d %H:%M:%S%z",
+                strict=False
+            )
+        ])
+
+        # Detectar y convertir columnas numéricas (excepto 'timestamp')
+        columnas_num = [
+            col for col in df.columns
+            if col != "timestamp" and df[col].dtype == pl.Utf8
+        ]
+        df = df.with_columns([
+            pl.col(col).cast(pl.Float64) for col in columnas_num
+        ])
 
     # Agregar columnas comunes
     df = df.with_columns([

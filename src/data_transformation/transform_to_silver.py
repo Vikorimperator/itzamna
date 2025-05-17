@@ -116,22 +116,26 @@ def enriquecer_eventos_con_equipo(df_eventos, df_equipos):
         "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ])
 
-
 def generar_tabla_pozos(df_equipos: pl.DataFrame) -> pl.DataFrame:
     """
-    Genera una tabla por pozo con resumen operativo:
-    fecha de entrada, última salida, estado actual, etc.
+    Genera una tabla de resumen por pozo usando el equipo más reciente
+    (mayor fecha_entrada_operacion). También incluye cantidad total de equipos.
     """
-    return (
-        df_equipos
+    cantidad = df_equipos.group_by("pozo").agg(
+        pl.col("numero_equipo").n_unique().alias("cantidad_equipos")
+    )
+
+    ultimos = (
+        df_equipos.sort("fecha_entrada_operacion", descending=True)
         .group_by("pozo")
         .agg([
-            pl.col("fecha_entrada_operacion").min().alias("fecha_entrada"),
-            pl.col("fecha_salida_operacion").max().alias("ultima_salida"),
-            pl.col("numero_equipo").n_unique().alias("cantidad_equipos"),
-            pl.col("estado_equipo").max().alias("estado_actual")
+            pl.col("fecha_entrada_operacion").first().alias("fecha_entrada"),
+            pl.col("fecha_salida_operacion").first().alias("ultima_salida"),
+            pl.col("estado_equipo").first().alias("estado_actual")
         ])
     )
+
+    return ultimos.join(cantidad, on="pozo", how="left")
 
 def guardar_silver_parquet(dict_dfs):
     """Guarda cada DataFrame en formato Parquet dentro de su carpeta Silver correspondiente."""

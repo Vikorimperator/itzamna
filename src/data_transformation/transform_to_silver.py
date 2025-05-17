@@ -7,7 +7,7 @@ from src.utils.config import Paths
 def read_bronze_tables(con):
     """Carga las tablas de la capa Bronce desde DuckDB y las devuelve como DataFrames de Polars."""
     sensores = con.execute("SELECT * FROM bronze.sensor_data").pl()
-    equipos = con.execute("SELECTO* FROM bronze.equipos").pl()
+    equipos = con.execute("SELECT* FROM bronze.equipos").pl()
     eventos = con.execute("SELECT * FROM bronze.eventos").pl()
     return sensores, equipos, eventos
 
@@ -19,7 +19,8 @@ def prepare_equipos(df_equipos):
     ])
     df_equipos = df_equipos.with_columns([
         pl.when(
-            pl.col("fecha_salida_operacion").is_null() | (pl.col("fecha_salida_operacion") > datetime.utcnow())
+            pl.col("fecha_salida_operacion").is_null() | 
+            (pl.col("fecha_salida_operacion") > datetime.now(datetime.timezone.utc))
         ).then("activo").otherwise("inactivo").alias("estado_equipo")
     ])
     return df_equipos

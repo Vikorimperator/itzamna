@@ -86,6 +86,22 @@ def preparar_eventos(df_eventos):
         "pozo", "numero_equipo", "tipo_evento", "descripcion", "fecha_inicio", "fecha_fin", "comentario"
     ])
 
+def generar_tabla_pozos(df_equipos: pl.DataFrame) -> pl.DataFrame:
+    """
+    Genera una tabla por pozo con resumen operativo:
+    fecha de entrada, última salida, estado actual, etc.
+    """
+    return (
+        df_equipos
+        .group_by("pozo")
+        .agg([
+            pl.col("fecha_entrada_operacion").min().alias("fecha_entrada"),
+            pl.col("fecha_salida_operacion").max().alias("ultima_salida"),
+            pl.col("numero_equipo").n_unique().alias("cantidad_equipos"),
+            pl.col("estado_equipo").max().alias("estado_actual")
+        ])
+    )
+
 def guardar_silver_parquet(dict_dfs):
     """Guarda cada DataFrame en formato Parquet dentro de su carpeta Silver correspondiente."""
     for name, df in dict_dfs.items():
@@ -111,6 +127,7 @@ def transform_bronze_to_silver():
     lecturas = interpolar_por_equipo(sensores_filtrados)
     catalogo = generar_catalogo(lecturas)
     eventos_proc = preparar_eventos(eventos)
+    pozos_silver = generar_tabla_pozos(equipos)
 
     guardar_silver_parquet({
         "lecturas_silver": lecturas,
@@ -119,7 +136,8 @@ def transform_bronze_to_silver():
             "pozo", "numero_equipo", "modelo_bomba", "marca_bomba",
             "modelo_motor", "fecha_entrada_operacion", "fecha_salida_operacion", "estado_equipo"
         ]),
-        "eventos_silver": eventos_proc
+        "eventos_silver": eventos_proc,
+        "pozos_silver": pozos_silver
     })
 
     registrar_tablas_silver(con)

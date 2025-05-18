@@ -1,6 +1,7 @@
 import polars as pl
 import duckdb
 import datetime
+import zoneinfo
 from pathlib import Path
 from src.utils.config import Paths
 
@@ -11,15 +12,18 @@ def read_bronze_tables(con):
     eventos = con.execute("SELECT * FROM bronze.eventos").pl()
     return sensores, equipos, eventos
 
-def prepare_equipos(df_equipos):
+def prepare_equipos(df_equipos: pl.DataFrame) -> pl.DataFrame:
     """
-    Calcula la columna estado_equipo en función de la fecha de salida y la fecha actual (UTC).
-    Asume que las fechas ya vienen correctamente parseadas como datetime desde Bronce.
+    Asigna el estado activo/inactivo al equipo en función de su fecha de salida.
+    Mantiene la zona horaria local (America/Mexico_City) y asegura compatibilidad
+    con el resto del flujo.
     """
+    now_local = datetime.datetime.now(zoneinfo.ZoneInfo("America/Mexico_City"))
+
     df_equipos = df_equipos.with_columns([
         pl.when(
             pl.col("fecha_salida_operacion").is_null() |
-            (pl.col("fecha_salida_operacion") > pl.lit(datetime.datetime.now(datetime.timezone.utc)))
+            (pl.col("fecha_salida_operacion") > pl.lit(now_local))
         )
         .then(pl.lit("activo"))
         .otherwise(pl.lit("inactivo"))

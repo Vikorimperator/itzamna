@@ -150,7 +150,7 @@ def guardar_silver_parquet(dict_dfs):
 
 def registrar_tablas_silver(con):
     """Registra en DuckDB las tablas externas Silver leyendo los archivos Parquet."""
-    for name in ["lecturas_silver", "sensor_coverage_silver", "equipos_silver", "eventos_silver"]:
+    for name in ["lecturas_silver", "sensor_coverage_silver", "equipos_silver", "eventos_silver", "pozos_silver"]:
         con.execute(f"""
             CREATE OR REPLACE TABLE silver.{name} AS
             SELECT * FROM read_parquet('{Paths.SILVER_DIR / name}/*.parquet');

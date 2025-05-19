@@ -6,8 +6,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from itzamna_pipeline.itzamna_core.utils.config import Paths
 
-con = duckdb.connect(Paths.LAKE_FILE)
-
 def extract_pozo(csv_path: Path, table_name: str) -> str:
     """
     Extrae el número de pozo desde el nombre del archivo según el tipo de tabla.
@@ -35,6 +33,8 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     4) Escribir Parquet en data/lake/bronze/{table_name}/
     5) Crear tabla externa bronze.{table_name} con union_by_name
     """
+    con = duckdb.connect(Paths.LAKE_FILE)
+    
     name = csv_path.name
     exists = con.execute(
         "SELECT 1 FROM bronze.ingested_files WHERE file_name = ?",
@@ -130,4 +130,6 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     con.execute(
       "INSERT INTO bronze.ingested_files VALUES (?, ?)",
       [name, datetime.now(timezone.utc)]
+      
+    con.close()
     )

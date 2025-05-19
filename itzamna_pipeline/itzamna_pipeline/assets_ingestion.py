@@ -1,8 +1,12 @@
 from dagster import asset, Output, MetadataValue
 from itzamna_pipeline.itzamna_core.data_ingestion.ingest_bronze import ingest_csv_to_bronze
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
-RAW_DIR  = Path("data/raw")
+from itzamna_pipeline.itzamna_core.utils.config import Paths
+
+RAW_DIR  = Paths.RAW_DATA
 
 @asset
 def sensor_data_bronce() -> Output[None]:

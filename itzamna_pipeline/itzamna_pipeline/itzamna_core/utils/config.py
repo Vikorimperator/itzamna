@@ -5,13 +5,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Paths:
-    # Directorio raíz del proyecto
-    PROJECT_ROOT = Path(__file__).parents[2].resolve()
     # Directorio de raw data
-    RAW_DATA        = PROJECT_ROOT / "data" / "raw"
+    RAW_DATA        = Path(os.getenv("RAW_DATA_PATH"))
     # Archivo de catálogo de DuckDB
-    LAKE_FILE       = PROJECT_ROOT / "warehouse.duckdb"
+    LAKE_FILE       = Path(os.getenv("LAKE_PATH"))
     # Directorio de datos de parquet de bronce
-    BRONZE_DIR      = PROJECT_ROOT / "data" / "lake" / "bronze"
+    BRONZE_DIR      = Path(os.getenv("BRONZE_DIR_PATH"))
     # Directorio de datos de parquet de silver
-    SILVER_DIR      = PROJECT_ROOT / "data" / "lake" / "silver"
+    SILVER_DIR      = Path(os.getenv("SILVER_DIR_PATH"))

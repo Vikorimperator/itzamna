@@ -3,7 +3,7 @@ import duckdb
 import datetime
 import zoneinfo
 from pathlib import Path
-from src.utils.config import Paths
+from itzamna_pipeline.itzamna_core.utils.config import Paths
 
 def read_bronze_tables(con):
     """Carga las tablas de la capa Bronce desde DuckDB y las devuelve como DataFrames de Polars."""

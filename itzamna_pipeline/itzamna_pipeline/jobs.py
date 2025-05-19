@@ -8,5 +8,5 @@ from itzamna_pipeline.ops_ingestion import (
 @job
 def ingest_all_bronze_op_based():
     sensor = ingest_sensor_data()
-    equipos = ingest_equipos_data(_start=sensor)
-    ingest_eventos_data(_start=equipos)
+    equipos = ingest_equipos_data(start=sensor)
+    ingest_eventos_data(start=equipos)

@@ -1,9 +1,14 @@
-from dagster import Definitions, load_assets_from_modules
-
-from itzamna_pipeline import assets  # noqa: TID252
-
-all_assets = load_assets_from_modules([assets])
+from dagster import Definitions
+from itzamna_pipeline.assets_ingestion import (
+    sensor_data_bronce,
+    equipos_bronce,
+    eventos_bronce
+)
 
 defs = Definitions(
-    assets=all_assets,
+    assets=[
+        sensor_data_bronce,
+        equipos_bronce,
+        eventos_bronce
+    ]
 )

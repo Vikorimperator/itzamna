@@ -8,10 +8,5 @@ from itzamna_pipeline.ops_ingestion import (
 @job
 def ingest_all_bronze_op_based():
     sensor = ingest_sensor_data()
-    equipos = ingest_equipos_data()
-    eventos = ingest_eventos_data()
-
-    # Orden secuencial garantizado por el orden de llamadas
-    sensor
-    equipos
-    eventos
+    equipos = ingest_equipos_data(start_after=sensor)
+    eventos = ingest_eventos_data(start_after=equipos)

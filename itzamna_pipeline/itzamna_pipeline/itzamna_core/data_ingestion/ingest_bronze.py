@@ -4,7 +4,7 @@ import duckdb
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from itzamna_core.utils.config import Paths
+from itzamna_pipeline.itzamna_core.utils.config import Paths
 
 con = duckdb.connect(Paths.LAKE_FILE)
 

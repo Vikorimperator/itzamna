@@ -1,5 +1,5 @@
 from dagster import asset, Output, MetadataValue
-from itzamna_core.data_ingestion.ingest_bronze import ingest_csv_to_bronze
+from itzamna_pipeline.itzamna_core.data_ingestion.ingest_bronze import ingest_csv_to_bronze
 from pathlib import Path
 
 RAW_DIR  = Path("data/raw")

@@ -6,13 +6,8 @@ from itzamna_pipeline.assets_ingestion import (
     eventos_bronce
 )
 
-from itzamna_pipeline.jobs import ingest_all_bronze
+from itzamna_pipeline.jobs import ingest_all_bronze_op_based
 
 defs = Definitions(
-    assets=[
-        sensor_data_bronce,
-        equipos_bronce,
-        eventos_bronce
-    ],
-    jobs=[ingest_all_bronze]
+    jobs=[ingest_all_bronze_op_based]
 )

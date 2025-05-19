@@ -12,5 +12,6 @@ def ingest_all_bronze_op_based():
     eventos = ingest_eventos_data()
 
     # Orden secuencial garantizado por el orden de llamadas
+    sensor
     equipos
     eventos

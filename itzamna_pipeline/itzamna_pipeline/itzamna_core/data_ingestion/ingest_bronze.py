@@ -130,6 +130,5 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     con.execute(
       "INSERT INTO bronze.ingested_files VALUES (?, ?)",
       [name, datetime.now(timezone.utc)]
-      
-    con.close()
     )
+    con.close()

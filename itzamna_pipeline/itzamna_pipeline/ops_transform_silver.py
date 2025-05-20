@@ -1,4 +1,4 @@
-from dagster import  In, op, job, Nothing
+from dagster import  In, op, Nothing
 import polars as pl
 import duckdb
 from itzamna_pipeline.itzamna_core.utils.config import Paths
@@ -77,7 +77,7 @@ def save_all_silver_outputs(lecturas, catalogo, equipos, eventos, pozos) -> Noth
     })
 
 @op(ins={"start": In(Nothing)})
-def register_silver_tables(start) -> Nothing:
+def register_silver_tables() -> Nothing:
     """Registra las tablas Silver como vistas externas sobre archivos Parquet dentro de DuckDB."""
     con = duckdb.connect(str(Paths.LAKE_FILE))
     registrar_tablas_silver(con)

@@ -29,4 +29,4 @@ def transform_all_silver_op_based():
     eventos_enriquecidos = enrich_eventos_with_equipo(eventos, equipos)
     pozos = generate_pozos_summary(equipos)
     save_all_silver_outputs(lecturas, catalogo, equipos, eventos_enriquecidos, pozos)
-    register_silver_tables()
+    register_silver_tables(save_all_silver_outputs)

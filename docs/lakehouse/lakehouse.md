@@ -46,15 +46,29 @@ Los archivos CSV se ingestan a Bronce utilizando `Polars` y `DuckDB`. En esta ca
 
 ## ⚙️ Capa Silver (Validación y Transformación)
 
-En Silver se aplican transformaciones de negocio con `Polars`:
+En Silver se aplican transformaciones de negocio con `Polars`. Los datos se interpolan, filtran y enriquecen para asegurar consistencia temporal y relacional.
 
-### Funciones Clave
+### ✅ Tablas Silver
 
-- `prepare_equipos`: asigna estado `"activo"` o `"inactivo"` según la fecha de salida del equipo
-- `filtrar_sensores_validos`: conserva solo las lecturas dentro del período de operación del equipo
-- `preparar_eventos`: renombra y estructura los eventos
-- `enriquecer_eventos_con_equipo`: asigna `numero_equipo` a cada evento
-- `generar_tabla_pozos`: resume el estado y cantidad de equipos por pozo
+| Tabla                         | Descripción                                                                 |
+|-------------------------------|-----------------------------------------------------------------------------|
+| `silver.lecturas_silver`      | Lecturas interpoladas cada 10 minutos por pozo y número de equipo           |
+| `silver.sensor_coverage_silver` | Catálogo de sensores disponibles por equipo                                |
+| `silver.equipos_silver`       | Datos técnicos de equipos + estado calculado (`activo` / `inactivo`)        |
+| `silver.eventos_silver`       | Eventos enriquecidos con `numero_equipo`, según ventana de operación        |
+| `silver.pozos_silver`         | Resumen por pozo: última fecha de operación, estado actual, número de equipos |
+
+---
+
+### Funciones Clave aplicadas
+
+- `prepare_equipos`: asigna estado `"activo"` o `"inactivo"` según la fecha de salida del equipo.
+- `filtrar_sensores_validos`: conserva solo las lecturas dentro del período de operación del equipo.
+- `interpolar_por_equipo`: interpola lecturas cada 10 minutos.
+- `generar_catalogo`: identifica los sensores válidos para cada equipo.
+- `preparar_eventos`: estandariza eventos desde Bronce.
+- `enriquecer_eventos_con_equipo`: asigna `numero_equipo` a eventos según fechas.
+- `generar_tabla_pozos`: resume el estado y cantidad de equipos por pozo.
 
 ### 🕐 Zonas Horarias
 
@@ -65,10 +79,11 @@ En Silver se aplican transformaciones de negocio con `Polars`:
 
 ## ✅ Buenas prácticas aplicadas
 
-- Ingesta incremental basada en `ingested_files`
-- Enriquecimiento desde nombre del archivo (sin modificar los crudos)
-- Separación clara entre Bronce (raw) y Silver (validado)
-- Uso de `Polars` por su rendimiento y compatibilidad con `DuckDB` vía `Arrow`
+- Ingesta incremental basada en `ingested_files`.
+- Separación entre datos crudos (Bronce) y validados (Silver).
+- Transformación eficiente y vectorizada con `Polars`.
+- Interpolación controlada por equipo y por sensor.
+- Registro automático de vistas externas en DuckDB.
 
 ---
 
@@ -80,7 +95,11 @@ df = con.execute(\"SELECT * FROM bronze.sensor_data LIMIT 5\").arrow()
 pl.from_arrow(df).schema
 ```
 
-🚧 Próximos pasos sugeridos
-* Incorporar capa Gold para KPIs agregados
-* Automatizar con Dagster o Prefect
+---
+
+## 🚧 Próximos pasos sugeridos
+* Incorporar capa Gold para KPIs agregados o dashboards.
+* Agregar validaciones automáticas de calidad de datos.
+* Integrar modelos predictivos (ML) sobre tablas Silver.
+* Automatizar orquestación completa con sensores de archivos.
 * Agregar dbt para modelado declarativo

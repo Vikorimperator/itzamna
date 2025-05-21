@@ -1,0 +1,10 @@
+
+# Ignora bases de datos temporales de duckdb
+*.duckdb
+
+# Ignora archivos generados por dbt
+dbt_modules/
+logs/
+manifest.json
+run_results.json
+dbt_packages/

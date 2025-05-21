@@ -1,5 +1,5 @@
 import duckdb
-from src.utils.config import Paths
+from itzamna_pipeline.itzamna_core.utils.config import Paths
 
 def init_lakehouse():
     # Conecta al archivo; lo crea si no existe

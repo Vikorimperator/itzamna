@@ -1,6 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine
-from src.utils.config import Paths
+from itzamna_pipeline.itzamna_core.utils.config import Paths
 import logging
 
 engine = create_engine(Paths.BRONZE_DB_URL)

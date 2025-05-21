@@ -1,12 +1,11 @@
 import re
+import time
 import polars as pl
 import duckdb
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from src.utils.config import Paths
-
-con = duckdb.connect(Paths.LAKE_FILE)
+from itzamna_pipeline.itzamna_core.utils.config import Paths
 
 def extract_pozo(csv_path: Path, table_name: str) -> str:
     """
@@ -35,18 +34,10 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
     4) Escribir Parquet en data/lake/bronze/{table_name}/
     5) Crear tabla externa bronze.{table_name} con union_by_name
     """
-    name = csv_path.name
-    exists = con.execute(
-        "SELECT 1 FROM bronze.ingested_files WHERE file_name = ?",
-        [name]
-    ).fetchone()
-    if exists:
-        return
-
     pozo = extract_pozo(csv_path, table_name)
 
     df = pl.read_csv(csv_path)
-
+    
     # Parseo de fechas según la tabla
     if table_name == "equipos":
         df = df.with_columns([
@@ -116,18 +107,30 @@ def ingest_csv_to_bronze(csv_path: Path, table_name: str):
         pl.lit(datetime.now(timezone.utc)).alias("ingestion_timestamp")
     ])
 
+    # Guardar Parquet
     out_dir = Paths.BRONZE_DIR / table_name
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"{csv_path.stem}.parquet"
     df.write_parquet(out_file, compression="zstd")
+    
+    time.sleep(0.2)
+    
+    with duckdb.connect(str(Paths.LAKE_FILE)) as con:
+        name = csv_path.name
+        exists = con.execute(
+            "SELECT 1 FROM bronze.ingested_files WHERE file_name = ?",
+            [name]
+        ).fetchone()
+        if exists:
+            return
 
-    con.execute(f"""
-      CREATE OR REPLACE TABLE bronze.{table_name} AS
-      SELECT *
-      FROM read_parquet('{out_dir}/*.parquet', union_by_name=true);
-    """)
+        con.execute(f"""
+        CREATE OR REPLACE TABLE bronze.{table_name} AS
+        SELECT *
+        FROM read_parquet('{out_dir}/*.parquet', union_by_name=true);
+        """)
 
-    con.execute(
-      "INSERT INTO bronze.ingested_files VALUES (?, ?)",
-      [name, datetime.now(timezone.utc)]
-    )
+        con.execute(
+        "INSERT INTO bronze.ingested_files VALUES (?, ?)",
+        [name, datetime.now(timezone.utc)]
+        )

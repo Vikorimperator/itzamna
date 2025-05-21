@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from src.utils.config import Paths
+from itzamna_core.utils.config import Paths
 from pathlib import Path
 import logging
 

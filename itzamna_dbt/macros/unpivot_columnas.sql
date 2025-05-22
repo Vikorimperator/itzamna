@@ -4,7 +4,7 @@
         id_columns: lista de columnas que NO se deben unpivotar
     #}
 
-    {% set columns = adapter.get_columns_in_relation(ref(model)) %}
+    {% set columns = adapter.get_columns_in_relation(source('silver', model)) %}
     {% set sensor_columns = [] %}
     
     {# Filtrar solo las columnas que no están en id_columns #}

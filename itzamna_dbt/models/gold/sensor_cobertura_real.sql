@@ -24,4 +24,4 @@ cobertura AS (
 
 SELECT *
 FROM cobertura
-WHERE procentaje_valido >= 0.9
+WHERE porcentaje_valido >= 0.9

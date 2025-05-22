@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 WITH base AS (
-    SELECT * FROM {{ ref('lecturas_silver') }}
+    SELECT * FROM {{ source('silver', 'lecturas_silver') }}
 ),
 
 unpivoted AS (

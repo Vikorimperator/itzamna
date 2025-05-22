@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: silver
+    description: >
+      Tablas validadas y transformadas por Dagster.
+    tables:
+      - name: lecturas_silver
+        description: >
+          Lecturas interpoladas por equipo y pozo, con valores numéricos.
+        columns:
+          - name: pozo
+            description: Identificador del pozo.
+            tests: [not_null]
+          - name: numero_equipo
+            description: Equipo dentro del pozo.
+            tests: [not_null]
+          - name: timestamp
+            description: Marca de tiempo de la lectura.
+            tests: [not_null]

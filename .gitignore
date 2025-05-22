@@ -13,10 +13,10 @@ notebooks/
 # Archivos de Bases de Datos
 *.sqlite
 *.db
-*duckdb
+*.duckdb
+!warehouse.duckdb   # <- EXCEPCIÓN: este sí lo queremos subir
 
 # Otros archivos temporales
-*.log
 *.tmp
 __pycache__/
 *.py[cod]

@@ -1,6 +1,5 @@
-
-# Ignora bases de datos temporales de duckdb
-*.duckdb
+# Ignora bases de datos temporales de duckdb usadas por dbt local
+dev.duckdb
 
 # Ignora archivos generados por dbt
 dbt_modules/

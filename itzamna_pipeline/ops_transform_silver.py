@@ -83,8 +83,8 @@ def register_silver_tables() -> Nothing:
     registrar_tablas_silver(con)
     con.close()
 
-@op
-def materializar_tablas_silver_en_duckdb():
+@op(ins={"start": In(Nothing)})
+def materializar_tablas_silver_en_duckdb() -> Nothing:
     """
     Este op toma los archivos .parquet de la capa Silver (lecturas, eventos, equipos, etc.)
     y los materializa como tablas físicas dentro del archivo warehouse.duckdb.
@@ -93,11 +93,11 @@ def materializar_tablas_silver_en_duckdb():
     con = duckdb.connect(Paths.LAKE_FILE)
 
     tablas = {
-        "lecturas_silver": Paths.SILVER_DIR_PATH / "lecturas_silver" / "*.parquet",
-        "eventos_silver": Paths.SILVER_DIR_PATH / "eventos_silver" / "*.parquet",
-        "equipos_silver": Paths.SILVER_DIR_PATH / "equipos_silver" / "*.parquet",
-        "pozos_silver": Paths.SILVER_DIR_PATH / "pozos_silver" / "*.parquet",
-        "sensor_coverage_silver": Paths.SILVER_DIR_PATH / "sensor_coverage_silver" / "*.parquet"
+        "lecturas_silver": Paths.SILVER_DIR / "lecturas_silver" / "*.parquet",
+        "eventos_silver": Paths.SILVER_DIR / "eventos_silver" / "*.parquet",
+        "equipos_silver": Paths.SILVER_DIR / "equipos_silver" / "*.parquet",
+        "pozos_silver": Paths.SILVER_DIR / "pozos_silver" / "*.parquet",
+        "sensor_coverage_silver": Paths.SILVER_DIR / "sensor_coverage_silver" / "*.parquet"
     }
 
     for nombre_tabla, ruta_parquet in tablas.items():

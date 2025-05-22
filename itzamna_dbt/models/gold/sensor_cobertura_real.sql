@@ -1,27 +1,10 @@
 {{ config(materialized='table') }}
 
-WITH base AS (
-    SELECT * FROM {{ source('silver', 'lecturas_silver') }}
-),
-
-unpivoted AS (
-
-    {{ generate_unpivot_sql('lecturas_silver', ['pozo', 'numero_equipo']) }}
-
-),
-
-cobertura AS (
-    SELECT
-        pozo,
-        numero_equipo,
-        sensor,
-        COUNT(*) AS total_registros,
-        COUNT(valor) AS registros_validos,
-        ROUND(COUNT(valor) * 1.0 / COUNT(*), 3) AS porcentaje_valido
-    FROM unpivoted
-    GROUP BY pozo, numero_equipo, sensor
-)
+-- Este modelo identifica los sensores con cobertura real
+-- (porcentaje de registros válidos >= 90%) para cada equipo y pozo.
+-- La lógica de cálculo y filtro se realiza dinámicamente desde la macro.
 
 SELECT *
-FROM cobertura
-WHERE porcentaje_valido >= 0.9
+FROM (
+    {{ generate_unpivot_sql('lecturas_silver', ['pozo', 'numero_equipo'], 0.9) }}
+) AS cobertura

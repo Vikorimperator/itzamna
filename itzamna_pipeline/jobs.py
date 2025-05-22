@@ -15,7 +15,8 @@ from itzamna_pipeline.ops_transform_silver import (
     load_bronze_data, prepare_equipos_silver, filter_valid_sensors,
     interpolate_sensors, generate_sensor_catalog, prepare_eventos_silver,
     enrich_eventos_with_equipo, generate_pozos_summary,
-    save_all_silver_outputs, register_silver_tables
+    save_all_silver_outputs, register_silver_tables,
+    materializar_tablas_silver_en_duckdb
 )
 
 @job
@@ -29,4 +30,5 @@ def transform_all_silver_op_based():
     eventos_enriquecidos = enrich_eventos_with_equipo(eventos, equipos)
     pozos = generate_pozos_summary(equipos)
     save_output  = save_all_silver_outputs(lecturas, catalogo, equipos, eventos_enriquecidos, pozos)
-    register_silver_tables(save_output)
+    register = register_silver_tables(save_output)
+    materializar_tablas_silver_en_duckdb(start=register)

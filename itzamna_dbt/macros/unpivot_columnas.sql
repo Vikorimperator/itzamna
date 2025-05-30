@@ -31,6 +31,11 @@
         {% do selects.append(sql) %}
     {% endfor %}
 
-    {{ selects | join(" UNION ALL\n") }}
+    {% if selects | length == 0 %}
+        SELECT NULL AS pozo, NULL AS numero_equipo, NULL AS sensor,
+               0 AS total_registros, 0 AS registros_validos, 0.0 AS porcentaje_valido
+    {% else %}
+        {{ selects | join(" UNION ALL\n") }}
+    {% endif %}
 {% endmacro %}
 

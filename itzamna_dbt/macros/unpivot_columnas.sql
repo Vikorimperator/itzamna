@@ -5,7 +5,8 @@
         min_porcentaje_valido: umbral mínimo requerido de datos válidos por sensor
     #}
 
-    {% set columns = adapter.get_columns_in_relation(source('silver', model)) %}
+    {% set relation = source('silver', model) %}
+    {% set columns = adapter.get_columns_in_relation(relation) %}
     {% set sensor_columns = [] %}
 
     {% for col in columns %}
@@ -24,7 +25,7 @@
                 COUNT(*) AS total_registros,
                 COUNT({{ sensor }}) AS registros_validos,
                 ROUND(COUNT({{ sensor }}) * 1.0 / COUNT(*), 3) AS porcentaje_valido
-            FROM {{ source('silver', model) }}
+            FROM {{ relation }}
             GROUP BY pozo, numero_equipo
             HAVING ROUND(COUNT({{ sensor }}) * 1.0 / COUNT(*), 3) >= {{ min_porcentaje_valido }}
         {% endset %}
@@ -32,10 +33,16 @@
     {% endfor %}
 
     {% if selects | length == 0 %}
-        SELECT NULL AS pozo, NULL AS numero_equipo, NULL AS sensor,
-               0 AS total_registros, 0 AS registros_validos, 0.0 AS porcentaje_valido
+        SELECT * FROM (
+            SELECT
+                CAST(NULL AS VARCHAR) AS pozo,
+                CAST(NULL AS INT) AS numero_equipo,
+                CAST(NULL AS VARCHAR) AS sensor,
+                CAST(NULL AS INTEGER) AS total_registros,
+                CAST(NULL AS INTEGER) AS registros_validos,
+                CAST(NULL AS DOUBLE) AS porcentaje_valido
+        ) WHERE false
     {% else %}
         {{ selects | join(" UNION ALL\n") }}
     {% endif %}
 {% endmacro %}
-

@@ -11,7 +11,7 @@ WITH lecturas AS (
 sensores_validos AS (
 
     SELECT pozo, numero_equipo, sensor
-    FROM {{ source('sensor_cobertura_real') }}
+    FROM {{ ref('sensor_cobertura_real') }}
 
 ),
 
@@ -38,7 +38,7 @@ agrupado AS (
     SELECT
         pozo,
         numero_equipo,
-        DATE_TRUNC('day', timestamp) AS fecha,,
+        DATE_TRUNC('day', timestamp) AS fecha,
 
         -- Agrupamos por timestamp: sensor: valor
         STRING_AGG(

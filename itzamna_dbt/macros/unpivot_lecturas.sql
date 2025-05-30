@@ -3,7 +3,9 @@
         model: tabla de entrada (ej. 'lecturas_silver')
         id_columns: columnas que no se deben pivotar
     #}
-    {% set columns = adapter.get_columns_in_relation(source('silver', model)) %}
+    
+    {% set relation = source('silver', model) %}
+    {% set columns = adapter.get_columns_in_relation(relation) %}
     {% set sensores = [] %}
 
     {% for col in columns %}
@@ -14,7 +16,10 @@
 
     {% set selects = [] %}
     {% for sensor in sensores %}
-        {% set sql = "SELECT pozo, numero_equipo, timestamp, '" ~ sensor ~ "' AS sensor, " ~ sensor ~ " AS valor FROM " ~ source('silver', model) %}
+        {% set sql %}
+            SELECT pozo, numero_equipo, timestamp, '{{ sensor }}' AS sensor, {{ sensor }} AS valor
+            FROM {{ source('silver', model) }}
+        {% endset %}
         {% do selects.append(sql) %}
     {% endfor %}
 

@@ -1,7 +1,20 @@
-greenlet==3.1.1
-numpy==2.2.4
+# Librerías principales del proyecto
+dagster==1.10.15
+dagster-duckdb==0.26.15
+dagster-graphql==1.10.15
+dagster-webserver==1.10.15
+
+dbt-core==1.9.4
+dbt-duckdb==1.9.3
+duckdb==1.2.2
+
+# Dataframes y procesamiento de datos
+polars==1.28.1
 pandas==2.2.3
-pytz==2025.2
-pywin32==304
+numpy==2.2.4
+pyarrow==20.0.0
+
+# Utilidades de entorno
+python-dotenv==1.1.0
 SQLAlchemy==2.0.40
-tzdata==2025.2
+psycopg2==2.9.10

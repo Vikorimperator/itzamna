@@ -1,14 +1,32 @@
-# Operating system files
+# Archivos del sistema operativo
 .DS_Store
 
-# Environment files with sensitive data
+# Archivos locales o de entorno
 .env
+.venv/
+*.log
 
-# Folders we don't want to upload to the repository
+# Carpetas que no queremos cargar al repositorio
 data/
 notebooks/
 
-# Other temporary files
-*.log
+# Archivos de Bases de Datos
+*.sqlite
+*.db
+*.duckdb
+!warehouse.duckdb   # <- EXCEPCIÓN: este sí lo queremos subir
+
+# Otros archivos temporales
 *.tmp
 __pycache__/
+*.py[cod]
+
+# Archivos temporales de Dagster
+.tmp_dagster_home_*/
+dagster.db
+instance/
+storage/
+
+# Archivos Parquet y bases de datos locales
+data/**/*.parquet
+data/**/*.duckdb

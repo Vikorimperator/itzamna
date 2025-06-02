@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: sensor_cobertura_real
+    description: >
+      Tabla que identifica los sensores que tienen cobertura real por pozo y equipo. 
+      Se considera cobertura real si el porcentaje de registros válidos (no nulos) es mayor o igual al 90%.
+    columns:
+      - name: pozo
+        description: Identificador del pozo.
+        tests:
+          - not_null
+
+      - name: numero_equipo
+        description: Identificador del equipo.
+        tests:
+          - not_null
+
+      - name: sensor
+        description: Nombre del sensor.
+        tests:
+          - not_null
+
+      - name: total_registros
+        description: Total de registros detectados para ese sensor en ese equipo.
+
+      - name: registros_validos
+        description: Registros válidos (no nulos) para ese sensor.
+
+      - name: porcentaje_valido
+        description: Porcentaje de registros válidos del sensor sobre el total.

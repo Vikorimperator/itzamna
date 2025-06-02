@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: document_chunks
+    description: >
+      Tabla Gold que contiene documentos de lecturas sensoras por día, pozo y número de equipo,
+      en formato texto, construida para ser usada como chunks en un sistema de RAG (Retrieval-Augmented Generation).
+      Se construye concatenando los sensores válidos por pozo/equipo de acuerdo con la tabla sensor_cobertura_real.
+
+    columns:
+      - name: id
+        description: Identificador único del documento generado (pozo-equipo-fecha)
+        tests:
+          - unique
+          - not_null
+
+      - name: content
+        description: Texto concatenado de lecturas, agrupado por día y por equipo.
+
+      - name: pozo
+        description: Nombre del pozo
+        tests:
+          - not_null
+
+      - name: numero_equipo
+        description: Número de equipo dentro del pozo
+        tests:
+          - not_null
+
+      - name: fecha
+        description: Fecha (día) de agrupamiento de lecturas
+        tests:
+          - not_null

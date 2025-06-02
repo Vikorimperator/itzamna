@@ -1,0 +1,25 @@
+name: 'itzamna_dbt'
+version: '1.0.0'
+
+profile: 'itzamna_dbt'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  itzamna_dbt:
+    # Configuración global (opcional)
+    +materialized: table
+    
+    # Aquí definimos que los modelos en la carpeta models/gold/
+    # deben ir al esquema `gold`
+    gold_models:
+      +schema: gold

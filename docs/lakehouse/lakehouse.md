@@ -103,3 +103,64 @@ pl.from_arrow(df).schema
 * Integrar modelos predictivos (ML) sobre tablas Silver.
 * Automatizar orquestación completa con sensores de archivos.
 * Agregar dbt para modelado declarativo
+
+# 🟡 Estructura de las Tablas Gold (`itzamna_dbt`)
+
+Las tablas en la capa **Gold** representan vistas transformadas y listas para análisis avanzado, especialmente orientadas a tareas de NLP como recuperación aumentada por generación (RAG). A continuación se describe la estructura de cada tabla:
+
+---
+
+## 📘 `main_gold.sensor_cobertura_real`
+
+### 🧱 Descripción
+Tabla que indica la cobertura de cada sensor (porcentaje de datos válidos) por combinación de `pozo` y `numero_equipo`.
+
+### 📐 Esquema
+
+| Columna             | Tipo       | Descripción                                                                 |
+|---------------------|------------|-----------------------------------------------------------------------------|
+| `pozo`              | `VARCHAR`  | Identificador del pozo.                                                    |
+| `numero_equipo`     | `INTEGER`  | Número del equipo dentro del pozo.                                         |
+| `sensor`            | `VARCHAR`  | Nombre del sensor registrado en `lecturas_silver`.                         |
+| `total_registros`   | `INTEGER`  | Total de registros para ese sensor en esa combinación pozo-equipo.         |
+| `registros_validos` | `INTEGER`  | Registros que no son `NULL` para el sensor.                                |
+| `porcentaje_valido` | `FLOAT`    | Proporción `registros_validos / total_registros`.                          |
+
+### 🔎 Consideraciones
+- Sólo se incluyen sensores cuyo `porcentaje_valido >= 0.9`.
+- Útil para filtrar sensores no operativos o irrelevantes por baja cobertura.
+
+---
+
+## 📘 `main_gold.document_chunks`
+
+### 🧱 Descripción
+Tabla que agrupa y convierte las lecturas de sensores válidos en documentos diarios por equipo y pozo. Cada documento es un chunk textual con formato legible para tareas de NLP.
+
+### 📐 Esquema
+
+| Columna         | Tipo        | Descripción                                                                 |
+|------------------|-------------|-----------------------------------------------------------------------------|
+| `id`             | `VARCHAR`   | ID único: `pozo-numero_equipo-fecha (YYYYMMDD)`.                           |
+| `content`        | `TEXT`      | Texto plano con las lecturas del día agrupadas por sensor y timestamp.     |
+| `pozo`           | `VARCHAR`   | Identificador del pozo.                                                    |
+| `numero_equipo`  | `INTEGER`   | Número del equipo dentro del pozo.                                         |
+| `fecha`          | `DATE`      | Fecha (a nivel día) de los datos agregados.                                |
+
+### 🔎 Formato del campo `content`
+```text
+2023-08-24 00:00 | Corriente de entrada: 8.4
+2023-08-24 00:10 | Corriente de entrada: 8.7
+2023-08-24 00:20 | Corriente de entrada: 8.9
+```
+
+## 🧠 Aplicaciones
+- Entrada directa para generación de embeddings (OpenAI, HuggingFace, Vertex AI).
+- Ideal para búsqueda semántica o recuperación de contexto para LLMs.
+
+## 🔄 Relación entre tablas
+- document_chunks depende de los sensores válidos definidos en sensor_cobertura_real.
+- Ambas se derivan de la tabla silver.lecturas_silver, pero document_chunks filtra y estructura los datos de forma legible.
+
+## 🧪 Siguiente paso sugerido
+Indexar document_chunks con una base de datos vectorial y usarlo como fuente en un pipeline de Retrieval-Augmented Generation (RAG).

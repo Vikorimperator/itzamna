@@ -17,8 +17,13 @@
     {% set selects = [] %}
     {% for sensor in sensores %}
         {% set sql %}
-            SELECT pozo, numero_equipo, timestamp, '{{ sensor }}' AS sensor, {{ sensor }} AS valor
-            FROM {{ source('silver', model) }}
+            SELECT 
+                pozo, 
+                numero_equipo, 
+                timestamp, 
+                '{{ sensor }}' AS sensor, 
+                "{{ sensor }}" AS valor
+            FROM {{ relation }}
         {% endset %}
         {% do selects.append(sql) %}
     {% endfor %}

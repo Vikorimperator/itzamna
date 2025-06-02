@@ -23,11 +23,11 @@
                 numero_equipo,
                 '{{ sensor }}' AS sensor,
                 COUNT(*) AS total_registros,
-                COUNT({{ sensor }}) AS registros_validos,
-                ROUND(COUNT({{ sensor }}) * 1.0 / COUNT(*), 3) AS porcentaje_valido
+                COUNT("{{ sensor }}") AS registros_validos,
+                ROUND(COUNT("{{ sensor }}") * 1.0 / COUNT(*), 3) AS porcentaje_valido
             FROM {{ relation }}
             GROUP BY pozo, numero_equipo
-            HAVING ROUND(COUNT({{ sensor }}) * 1.0 / COUNT(*), 3) >= {{ min_porcentaje_valido }}
+            HAVING ROUND(COUNT("{{ sensor }}") * 1.0 / COUNT(*), 3) >= {{ min_porcentaje_valido }}
         {% endset %}
         {% do selects.append(sql) %}
     {% endfor %}

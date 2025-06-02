@@ -16,5 +16,10 @@ clean-targets:
 
 models:
   itzamna_dbt:
+    # Configuración global (opcional)
+    +materialized: table
+    
+    # Aquí definimos que los modelos en la carpeta models/gold/
+    # deben ir al esquema `gold`
     gold_models:
       +schema: gold

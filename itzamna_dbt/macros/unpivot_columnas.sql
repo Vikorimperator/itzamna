@@ -41,7 +41,7 @@
                 CAST(NULL AS INTEGER) AS total_registros,
                 CAST(NULL AS INTEGER) AS registros_validos,
                 CAST(NULL AS DOUBLE) AS porcentaje_valido
-        ) WHERE false
+        ) AS vacio WHERE false
     {% else %}
         {{ selects | join(" UNION ALL\n") }}
     {% endif %}

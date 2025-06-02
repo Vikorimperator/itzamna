@@ -38,7 +38,7 @@ agrupado AS (
     SELECT
         pozo,
         numero_equipo,
-        DATE_TRUNC('day', timestamp) AS fecha,
+        DATE_TRUNC('day', CAST(timestamp AS TIMESTAMP)) AS fecha,
 
         -- Agrupamos por timestamp: sensor: valor
         STRING_AGG(
@@ -51,7 +51,7 @@ agrupado AS (
         ) AS content
 
     FROM filtrado
-    GROUP BY pozo, numero_equipo, DATE_TRUNC('day', timestamp)
+    GROUP BY pozo, numero_equipo, DATE_TRUNC('day', CAST(timestamp AS TIMESTAMP))
 
 )
 

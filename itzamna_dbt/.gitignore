@@ -1,5 +1,5 @@
 # Ignora bases de datos temporales de duckdb usadas por dbt local
-dev.duckdb
+*.duckdb
 
 # Ignora archivos generados por dbt
 dbt_modules/
@@ -7,3 +7,5 @@ logs/
 manifest.json
 run_results.json
 dbt_packages/
+target/
+*.json
